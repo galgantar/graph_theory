@@ -1,49 +1,66 @@
-import time
+from graph import Color
+from main import wait, refresh, color_array, color_entire_graph
 
-def dfs(drawable_graph, current, end, path=[]):
+
+def one_after_another(element1, element2, array):
+    if element1 not in array or element2 not in array:
+        return False
+
+    return abs(array.index(element1) - array.index(element2)) == 1
+
+
+def dfs(graph, current, end, path=[]):
     path.append(current)
-    for n in drawable_graph.nodes:
-        if n in path:
-            n.color_red()
-        else:
-            n.color_black()
 
-        time.sleep(2)
-    if current == end:
-        for n in drawable_graph.nodes:
-            if n in path:
-                n.color_green()
-            else:
-                n.color_black()
-        time.sleep(7)
+    color_entire_graph(graph, Color.BLACK)
+    color_array([e for e in graph.edges if one_after_another(e.start_node, e.end_node, path)], Color.RED)
+    color_array([n for n in graph.nodes if n in path], Color.RED)
+    refresh(graph)
+    wait(1)
+
+    if current.value == end.value:
+        color_entire_graph(graph, Color.BLACK)
+        color_array([e for e in graph.edges if one_after_another(e.start_node, e.end_node, path)], Color.GREEN)
+        color_array([n for n in graph.nodes if n in path], Color.GREEN)
+        refresh(graph)
+        wait(5)
+
         return path
 
-    for node in drawable_graph[current].edges:
-        if node not in path:
-            new_path = dfs(drawable_graph, node, end, path)
+    for e in current.edges:
+        if e.end_node.value not in [i.value for i in path]:
+            new_path = dfs(graph, e.end_node, end, path.copy())
             if new_path:
                 return new_path
+
+    return None
+
+
+def bfs(graph, node_list, end, path=[], checked=set()):
+    color_entire_graph(graph, Color.BLACK)
+    color_array([node for node in graph.nodes if node.value in checked], Color.RED)
+    refresh(graph)
+    wait(1)
+
+    new_node_list = []
+    for node in node_list:
+        if node.value == end.value:
+            path.append(node)
+            return path
+
+        elif node.value not in checked:
+            new_node_list.extend([e.end_node for e in node.edges])
+
+        checked.add(node.value)
+
+    if new_node_list:
+        return bfs(graph, new_node_list, end, path)
+
     return None
 
 
-def bfs(graph, current, end, level=0, path=[], master=True):
-    path.append(current)
 
-    if end == current:
-        return path
-    else:
-        for node in graph[current].edges:
-            if node not in path:
 
-                new_path = bfs(graph, node, end, level-1, path, False)
-                if new_path:
-                    return new_path
-
-    while level < graph.nr_of_nodes and master:
-        level += 1
-        bfs(graph, current, end, level, path, True)
-
-    return None
 
 
 def boruvkas(graph):
