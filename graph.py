@@ -27,6 +27,9 @@ class Edge:
     def __eq__(self, other):
         return (self.start_node == other.start_node and self.end_node == other.end_node) or (self.end_node == other.start_node and self.start_node == other.end_node)
 
+    def __repr__(self):
+        return self.start_node.value, self.end_node.value
+
     def make_mark(self, mark):
         self.mark = mark
 
@@ -78,6 +81,9 @@ class Node:
             return self.value == other.value
         else:
             raise ValueError("Invalid comparison")
+
+    def __repr__(self):
+        return self.value
 
     def add_edge(self, edge):
         self.edges.append(edge)

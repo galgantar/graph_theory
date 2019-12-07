@@ -36,35 +36,41 @@ def dfs(graph, current, end, path=[]):
     return None
 
 
-def bfs(graph, node_list, end, path=[], checked=set()):
+def bfs(graph, node_list, end, path=[], checked_nodes=set(), master=True):
     color_entire_graph(graph, Color.BLACK)
-    color_array([node for node in graph.nodes if node.value in checked], Color.RED)
+    color_array([node for node in graph.nodes if node.value in checked_nodes], Color.RED)
     refresh(graph)
     wait(1)
 
     new_node_list = []
     for node in node_list:
-        if node.value == end.value:
-            path.append(node)
-            return path
+        if node[1].value == end.value:
+            path.append(node[1].value)
+            return path, node[0].value
 
-        elif node.value not in checked:
-            new_node_list.extend([e.end_node for e in node.edges])
-
-        checked.add(node.value)
+        elif node[1].value not in checked_nodes:
+            new_node_list.extend([(e.start_node, e.end_node) for e in node[1].edges])
+            checked_nodes.add(node[1].value)
 
     if new_node_list:
-        return bfs(graph, new_node_list, end, path)
-
+        path, prev_val = bfs(graph, new_node_list, end, path.copy(), checked_nodes, False)
+        path.append(prev_val)
+        if master:
+            color_entire_graph(graph, Color.BLACK)
+            color_array([node for node in graph.nodes if node.value in path], Color.GREEN)
+            color_array([e for e in graph.edges if e.start_node in path and e.end_node in path], Color.GREEN)
+            refresh(graph)
+            wait(7)
+            return path
+        else:
+            for node in node_list:
+                if node[1].value == prev_val:
+                    return path, node[0].value
     return None
 
 
-
-
-
-
 def boruvkas(graph):
-    forest = [[node] for node in graph.nodes]  # list of components
+    forest = [[node] for node in graph.nodes]
 
     while len(forest) > 1:
         cheapest_edges = [None for _ in range(len(forest))]
@@ -82,8 +88,23 @@ def boruvkas(graph):
                     if not cheapest_edges[i] or conn < cheapest_edges[conn.mark]:
                         cheapest_edges[conn.mark] = conn
 
+        color_array([e for e in graph.edges if e in cheapest_edges], Color.RED)
+        refresh(graph)
+        wait(1)
+
         forest.clear()
         for conn in cheapest_edges:
             forest.append(conn)
+
+        involved_nodes = set()
+        for conn in forest:
+            involved_nodes.add(conn.start_node.value)
+            involved_nodes.add(conn.end_node.value)
+
+        color_entire_graph(graph, Color.BLACK)
+        color_array([n for n in graph.nodes if n.value in involved_nodes], Color.BLUE)
+        color_array([e for e in graph.edges if e in forest], Color.BLUE)
+        refresh(graph)
+        wait(10)
 
         return [(conn.start_node, conn.end_node) for conn in forest]

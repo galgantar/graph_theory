@@ -71,9 +71,9 @@ def main():
     g1.connect_nodes("H", "G", 10)
     g1.connect_nodes("F", "G", 10)
     g1.connect_nodes("G", "F", 10)
+    g1.connect_nodes("D", "C", 10)
 
-    print(algorithms.bfs(g1, [g1["A"]], g1["D"]))
-    #print([x.value for x in algorithms.bfs(g1, [g1["A"]], g1["D"])])
+    print(algorithms.boruvkas(g1))
 
 
 if __name__ == "__main__":
