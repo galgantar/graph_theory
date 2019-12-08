@@ -1,5 +1,5 @@
 from graph import Color
-from main import wait, color_array, color_entire_graph
+from main import wait, refresh, color_array, color_entire_graph
 
 
 def one_after_another(element1, element2, array):
@@ -15,12 +15,14 @@ def dfs(graph, current, end, path=[]):
     color_entire_graph(graph, Color.BLACK)
     color_array([e for e in graph.edges if one_after_another(e.start_node, e.end_node, path)], Color.RED)
     color_array([n for n in graph.nodes if n in path], Color.RED)
+    refresh(graph)
     wait(1)
 
     if current.value == end.value:
         color_entire_graph(graph, Color.BLACK)
         color_array([e for e in graph.edges if one_after_another(e.start_node, e.end_node, path)], Color.GREEN)
         color_array([n for n in graph.nodes if n in path], Color.GREEN)
+        refresh(graph)
         wait(5)
 
         return path
@@ -37,6 +39,7 @@ def dfs(graph, current, end, path=[]):
 def bfs(graph, node_list, end, path=[], checked_nodes=set(), master=True):
     color_entire_graph(graph, Color.BLACK)
     color_array([node for node in graph.nodes if node.value in checked_nodes], Color.RED)
+    refresh(graph)
     wait(1)
 
     new_node_list = []
@@ -56,6 +59,7 @@ def bfs(graph, node_list, end, path=[], checked_nodes=set(), master=True):
             color_entire_graph(graph, Color.BLACK)
             color_array([node for node in graph.nodes if node.value in path], Color.GREEN)
             color_array([e for e in graph.edges if e.start_node in path and e.end_node in path], Color.GREEN)
+            refresh(graph)
             wait(7)
             return path
         else:
@@ -85,6 +89,7 @@ def boruvkas(graph):
                         cheapest_edges[conn.mark] = conn
 
         color_array([e for e in graph.edges if e in cheapest_edges], Color.RED)
+        refresh(graph)
         wait(1)
 
         forest.clear()
@@ -99,6 +104,7 @@ def boruvkas(graph):
         color_entire_graph(graph, Color.BLACK)
         color_array([n for n in graph.nodes if n.value in involved_nodes], Color.BLUE)
         color_array([e for e in graph.edges if e in forest], Color.BLUE)
+        refresh(graph)
         wait(10)
 
         return [(conn.start_node, conn.end_node) for conn in forest]

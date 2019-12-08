@@ -1,43 +1,28 @@
 import pygame
-import pygame_gui
-
 import time
 from graph import Graph
 import algorithms
 
 
-def check_events():
+def check_quit():
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             exit()
-
-        if event.type == pygame.USEREVENT:
-            if event.user_type == 'ui_button_pressed':
-                if event.ui_element == test_button:
-                    print('Hello World!')
-
-        gui_manager.process_events(event)
-
-
-def refresh():
-    check_events()
-    delta_time = clock.tick(30)/1000
-    gui_manager.update(delta_time)
-    draw_items(g1)
 
 
 def wait(seconds):
     t = 0
     while t < seconds:
         t1 = time.time()
-        refresh()
+        check_quit()
+        time.sleep(0.001)
         t += time.time()-t1
 
 
-def draw_items(graph):
+def refresh(graph):
+    check_quit()
     window.fill((255, 255, 255))
-    gui_manager.draw_ui(window)
 
     for edge in graph.edges:
         edge.draw(window, font2)
@@ -60,29 +45,35 @@ def color_entire_graph(graph, color):
 
 screen_width = 1000
 screen_height = 500
-app_run = True
 
-pygame.init()
-pygame.display.set_caption("Graph theory")
 window = pygame.display.set_mode((screen_width, screen_height))
+pygame.display.set_caption("Graph theory")
 
 pygame.font.init()
 font1 = pygame.font.SysFont("Comic Sans MS", 25)
 font2 = pygame.font.SysFont("Comic Sans MS", 20)
 
-clock = pygame.time.Clock()
-
-gui_manager = pygame_gui.UIManager((screen_width, screen_height))
-test_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((350, 275), (100, 50)), text='Say Hello', manager=gui_manager)
-algorithms_dropdown = pygame_gui.elements.ui_drop_down_menu.UIDropDownMenu(["Gal", "Vid", "Zarja"], "Gal", pygame.Rect((600, 200), (100, 30)), gui_manager)
-g1 = Graph()
-
 
 def main():
-    g1.random_fill()
+    g1 = Graph()
+    g1.add_node("A")
+    g1.add_node("B")
+    g1.add_node("C")
+    g1.add_node("D")
+    g1.add_node("E")
+    g1.add_node("F")
+    g1.add_node("G")
+    g1.add_node("H")
+    g1.connect_nodes("A", "B", 10)
+    g1.connect_nodes("B", "E", 10)
+    g1.connect_nodes("C", "G", 10)
+    g1.connect_nodes("A", "H", 10)
+    g1.connect_nodes("H", "G", 10)
+    g1.connect_nodes("F", "G", 10)
+    g1.connect_nodes("G", "F", 10)
+    g1.connect_nodes("D", "C", 10)
 
-    while True:
-        refresh()
+    print(algorithms.boruvkas(g1))
 
 
 if __name__ == "__main__":

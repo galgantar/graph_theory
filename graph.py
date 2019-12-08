@@ -1,6 +1,6 @@
 import pygame
 from enum import Enum
-from random import randint
+
 
 class Color(Enum):
     RED = 1
@@ -150,22 +150,3 @@ class Graph:
             for e in n.edges:
                 print(f"({e.start_node.value} {e.end_node.value})", end="")
             print()
-
-    def random_fill(self):
-        self.nodes.clear()
-        self.edges.clear()
-
-        start = ord("A")
-        nr_of_nodes = 10
-        nr_of_connections = 15
-
-        for i in range(nr_of_nodes):
-            self.add_node(chr(start + i))
-
-        for i in range(nr_of_connections):
-            r1, r2 = 1, 1
-            while r1 == r2:
-                r1 = randint(start, start + nr_of_nodes-1)
-                r2 = randint(start, start + nr_of_nodes-1)
-
-            self.connect_nodes(chr(r1), chr(r2), randint(1, 99))
