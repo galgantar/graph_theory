@@ -1,6 +1,7 @@
 import pygame
 from enum import Enum
-from random import randint
+from random import randint, choice
+
 
 class Color(Enum):
     RED = 1
@@ -15,7 +16,6 @@ class Edge:
         self.start_node = start_node
         self.end_node = end_node
         self.weight = weight
-        self.mark = None
 
         self.color = (0, 0, 0)
         #self.text_pos = self.calculate_text_pos()
@@ -28,10 +28,7 @@ class Edge:
         return (self.start_node == other.start_node and self.end_node == other.end_node) or (self.end_node == other.start_node and self.start_node == other.end_node)
 
     def __repr__(self):
-        return self.start_node.value, self.end_node.value
-
-    def make_mark(self, mark):
-        self.mark = mark
+        return f"Edge: {self.start_node.value}, {self.end_node.value}"
 
     """def calculate_text_pos(self):
         move_constant = 50
@@ -68,6 +65,7 @@ class Node:
     def __init__(self, value, position):
         self.edges = []
         self.value = value
+        self.mark = None
 
         self.position = position
         self.color = (0, 0, 0)
@@ -80,10 +78,13 @@ class Node:
         elif type(other) == Node:
             return self.value == other.value
         else:
-            raise ValueError("Invalid comparison")
+            raise ValueError(f"Invalid comparison of type: {type(other)}")
 
     def __repr__(self):
         return self.value
+
+    def make_mark(self, mark):
+        self.mark = mark
 
     def add_edge(self, edge):
         self.edges.append(edge)
@@ -128,8 +129,9 @@ class Graph:
         return False
 
     def add_node(self, name):
+        from main import screen_width, screen_height
         from random import randint
-        self.nodes.append(Node(name, (randint(100, 900), randint(100, 400))))
+        self.nodes.append(Node(name, (randint(100, screen_width-200), randint(100, screen_height-100))))
 
     def number_of_nodes(self):
         return len(self.nodes)
@@ -169,3 +171,18 @@ class Graph:
                 r2 = randint(start, start + nr_of_nodes-1)
 
             self.connect_nodes(chr(r1), chr(r2), randint(1, 99))
+
+    def is_connected(self):
+        start = self.nodes[0]
+        next_to_check = [e.end_node for e in start.edges]
+        checked_nodes = set()
+
+        while next_to_check:
+            new_check_arr = []
+            for node in next_to_check:
+                if node.value not in checked_nodes:
+                    checked_nodes.add(node.value)
+                    new_check_arr.extend([e.end_node for e in node.edges])
+            next_to_check = new_check_arr
+
+        return len(checked_nodes) == self.number_of_nodes()
