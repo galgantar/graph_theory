@@ -10,10 +10,11 @@ import algorithms
 class Gui:
     def __init__(self, screen_width, screen_height):
         self.graph = Graph()
-        self.graph.random_fill((100, screen_width-300), (50, screen_height-50))
+        self.graph.random_fill(10, 15, (100, screen_width-300), (50, screen_height-50))
         self.available_algorithms = ["Dfs", "Bfs", "Bovurkas"]
         self.selected_nodes = []
         self.currently_visualizing = False
+        self.moving_node = None
 
         pygame.init()
         pygame.font.init()
@@ -39,6 +40,12 @@ class Gui:
         self.check_events()
         delta_time = self.clock.tick(30) / 1000
         self.gui_manager.update(delta_time)
+
+        if not self.currently_visualizing:
+            self.color_entire_graph()
+            for node in self.graph.nodes:
+                if node.value in self.selected_nodes:
+                    node.color_element(Color.BLUE)
         self.draw_items()
 
     def check_events(self):
@@ -55,18 +62,32 @@ class Gui:
                         else:
                             print("Already visualizing")
 
-            if event.type == pygame.MOUSEBUTTONUP:
-                self.handle_click()
-
             self.gui_manager.process_events(event)
+        self.handle_mouse()
 
-    def handle_click(self):
-        pos = pygame.mouse.get_pos()
-        for node in self.graph.nodes:
-            if self.calculate_distance(node.position, pos) < 10:
-                if len(self.selected_nodes) == 2:
-                    self.selected_nodes.pop()
-                self.selected_nodes.append(node.value)
+    def handle_mouse(self):
+        left, middle, right = pygame.mouse.get_pressed()
+        mouse_pos = pygame.mouse.get_pos()
+        if right:
+            for node in self.graph.nodes:
+                if self.calculate_distance(node.position, mouse_pos) < 10:
+                    if node.value not in self.selected_nodes:
+                        if len(self.selected_nodes) == 2:
+                            self.selected_nodes.pop(0)
+                        self.selected_nodes.append(node.value)
+
+        if left:
+            if not self.moving_node:
+                for node in self.graph.nodes:
+                    if self.calculate_distance(node.position, mouse_pos) < 10:
+                        self.moving_node = node
+                        pygame.mouse.get_rel()
+            else:
+                pos_change = pygame.mouse.get_rel()
+                self.moving_node.position = self.moving_node.position[0]+pos_change[0], self.moving_node.position[1]+pos_change[1]
+
+        else:
+            self.moving_node = None
 
     def draw_items(self):
         self.window.fill((255, 255, 255))
@@ -91,12 +112,12 @@ class Gui:
         self.currently_visualizing = True
 
         if algorithm == "Dfs":
-            algorithms.dfs(self, self.graph["A"], self.graph["D"])
-            # algorithms.dfs(main_graph, main_graph[selected_nodes[0]], main_graph[selected_nodes[1]])
+            #algorithms.dfs(self, self.graph["A"], self.graph["D"])
+            algorithms.dfs(self, self.graph[self.selected_nodes[0]], self.graph[self.selected_nodes[1]])
             self.color_entire_graph()
 
         elif algorithm == "Bfs":
-            algorithms.bfs(self, [[None, self.graph["A"]]], self.graph["E"])
+            algorithms.bfs(self, [[None, self.graph[self.selected_nodes[0]]]], self.graph[self.selected_nodes[1]])
             self.color_entire_graph()
 
         elif algorithm == "Bovurkas":

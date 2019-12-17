@@ -122,12 +122,6 @@ class Graph:
             if node.value == item:
                 return node
 
-    def __contains__(self, item):
-        for node in self.nodes:
-            if node.value == item:
-                return True
-        return False
-
     def add_node(self, name, position):
         self.nodes.append(Node(name, position))
 
@@ -151,13 +145,11 @@ class Graph:
                 print(f"({e.start_node.value} {e.end_node.value})", end="")
             print()
 
-    def random_fill(self, width_range, height_range):
+    def random_fill(self, nr_of_nodes, nr_of_connections, width_range, height_range):
         self.nodes.clear()
         self.edges.clear()
 
         start = ord("A")
-        nr_of_nodes = 50
-        nr_of_connections = 150
 
         for i in range(nr_of_nodes):
             self.add_node(chr(start + i), (randint(*width_range), randint(*height_range)))
