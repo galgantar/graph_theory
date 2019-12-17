@@ -1,6 +1,6 @@
 import pygame
 from enum import Enum
-from random import randint, choice
+from random import randint
 
 
 class Color(Enum):
@@ -128,10 +128,8 @@ class Graph:
                 return True
         return False
 
-    def add_node(self, name):
-        from main import screen_width, screen_height
-        from random import randint
-        self.nodes.append(Node(name, (randint(100, screen_width-200), randint(100, screen_height-100))))
+    def add_node(self, name, position):
+        self.nodes.append(Node(name, position))
 
     def number_of_nodes(self):
         return len(self.nodes)
@@ -153,16 +151,16 @@ class Graph:
                 print(f"({e.start_node.value} {e.end_node.value})", end="")
             print()
 
-    def random_fill(self):
+    def random_fill(self, width_range, height_range):
         self.nodes.clear()
         self.edges.clear()
 
         start = ord("A")
-        nr_of_nodes = 10
-        nr_of_connections = 15
+        nr_of_nodes = 50
+        nr_of_connections = 150
 
         for i in range(nr_of_nodes):
-            self.add_node(chr(start + i))
+            self.add_node(chr(start + i), (randint(*width_range), randint(*height_range)))
 
         for i in range(nr_of_connections):
             r1, r2 = 1, 1
@@ -172,7 +170,7 @@ class Graph:
 
             self.connect_nodes(chr(r1), chr(r2), randint(1, 99))
 
-    def is_connected(self):
+    def is_graph_connected(self):
         start = self.nodes[0]
         next_to_check = [e.end_node for e in start.edges]
         checked_nodes = set()

@@ -1,5 +1,4 @@
-from graph import Color, Graph, Node
-from main import wait, color_array, color_entire_graph
+from graph import Color
 
 
 def one_after_another(element1, element2, array):
@@ -9,36 +8,40 @@ def one_after_another(element1, element2, array):
     return abs(array.index(element1) - array.index(element2)) == 1
 
 
-def dfs(graph, current, end, path=[]):
+def dfs(gui, current, end, path=None):
+    if path is None: path=[]
     path.append(current.value)
 
-    color_entire_graph(graph)
-    color_array([e for e in graph.edges if one_after_another(e.start_node.value, e.end_node.value, path)], Color.RED)
-    color_array([n for n in graph.nodes if n.value in path], Color.RED)
-    wait(1, graph)
+    gui.color_entire_graph()
+    gui.color_array([e for e in gui.graph.edges if one_after_another(e.start_node.value, e.end_node.value, path)], Color.RED)
+    gui.color_array([n for n in gui.graph.nodes if n.value in path], Color.RED)
+    gui.wait(1)
 
     if current.value == end.value:
-        color_entire_graph(graph)
-        color_array([e for e in graph.edges if one_after_another(e.start_node.value, e.end_node.value, path)], Color.GREEN)
-        color_array([n for n in graph.nodes if n.value in path], Color.GREEN)
-        wait(5, graph)
+        gui.color_entire_graph()
+        gui.color_array([e for e in gui.graph.edges if one_after_another(e.start_node.value, e.end_node.value, path)], Color.GREEN)
+        gui.color_array([n for n in gui.graph.nodes if n.value in path], Color.GREEN)
+        gui.wait(5)
 
         return path
 
     for e in current.edges:
         if e.end_node.value not in path:
-            new_path = dfs(graph, e.end_node, end, path.copy())
+            new_path = dfs(gui, e.end_node, end, path.copy())
             if new_path:
                 return new_path
 
     return None
 
 
-def bfs(graph: Graph, node_list: list, end: Node, path: list=[], checked_nodes: list=[], master: bool=True):
-    color_entire_graph(graph)
-    color_array([node for node in graph.nodes if node.value in [pair[1] for pair in checked_nodes]], Color.RED)
-    color_array([e for e in graph.edges if (e.start_node.value, e.end_node.value) in checked_nodes], Color.RED)
-    wait(1, graph)
+def bfs(gui, node_list, end, path=None, checked_nodes=None, master=True):
+    if path is None: path=[]
+    if checked_nodes is None: checked_nodes=[]
+
+    gui.color_entire_graph()
+    gui.color_array([node for node in gui.graph.nodes if node.value in [pair[1] for pair in checked_nodes]], Color.RED)
+    gui.color_array([e for e in gui.graph.edges if (e.start_node.value, e.end_node.value) in checked_nodes], Color.RED)
+    gui.wait(1)
 
     new_node_list = []
     for node in node_list:
@@ -54,14 +57,14 @@ def bfs(graph: Graph, node_list: list, end: Node, path: list=[], checked_nodes: 
                 checked_nodes.append((node[0], node[1].value))
 
     if new_node_list:
-        path, prev_val = bfs(graph, new_node_list, end, path.copy(), checked_nodes, False)
+        path, prev_val = bfs(gui, new_node_list, end, path.copy(), checked_nodes, False)
         if path and prev_val:
             path.append(prev_val)
             if master:
-                color_entire_graph(graph)
-                color_array([node for node in graph.nodes if node.value in path], Color.GREEN)
-                color_array([e for e in graph.edges if e.start_node in path and e.end_node in path], Color.GREEN)
-                wait(7, graph)
+                gui.color_entire_graph()
+                gui.color_array([node for node in gui.graph.nodes if node.value in path], Color.GREEN)
+                gui.color_array([e for e in gui.graph.edges if e.start_node in path and e.end_node in path], Color.GREEN)
+                gui.wait(7)
                 return path[::-1]
             else:
                 for node in node_list:
@@ -70,22 +73,23 @@ def bfs(graph: Graph, node_list: list, end: Node, path: list=[], checked_nodes: 
     return None, None
 
 
-def boruvkas(graph):
-    if not graph.is_connected():
+def boruvkas(gui):
+    if not gui.graph.is_graph_connected():
         print("Cannot run Bovurkas on unconnected graph")
         return None
+
     involved_edges = []
-    forest = [[node] for node in graph.nodes]
+    forest = [[node] for node in gui.graph.nodes]
 
     while len(forest) > 1:
-        color_entire_graph(graph)
+        gui.color_entire_graph()
         colored_edges = []
-        for e in graph.edges:
+        for e in gui.graph.edges:
             for comp in forest:
                 if e.start_node in comp and e.end_node in comp:
                     colored_edges.append(e)
-        color_array(colored_edges, Color.RED)  # Later RANDOM
-        wait(1, graph)
+        gui.color_array(colored_edges, Color.RED)  # Later RANDOM
+        gui.wait(1)
 
         for i in range(len(forest)):
             for node in forest[i]:
@@ -93,7 +97,7 @@ def boruvkas(graph):
 
         cheapest_edges = [None for _ in range(len(forest))]
 
-        for edge in graph.edges:
+        for edge in gui.graph.edges:
             if edge.start_node.mark != edge.end_node.mark:
                 if not cheapest_edges[edge.start_node.mark] or edge.weight < cheapest_edges[edge.start_node.mark].weight:
                     cheapest_edges[edge.start_node.mark] = edge
@@ -122,8 +126,8 @@ def boruvkas(graph):
 
         forest = new_forest
 
-    color_entire_graph(graph)
-    color_array([e for e in graph.edges if e in involved_edges], Color.GREEN)
-    wait(5, graph)
+    gui.color_entire_graph()
+    gui.color_array([e for e in gui.graph.edges if e in involved_edges], Color.GREEN)
+    gui.wait(5)
 
     return involved_edges
