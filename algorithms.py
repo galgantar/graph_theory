@@ -1,5 +1,6 @@
 from graph import Color
 
+"""Barvanje"""
 
 def one_after_another(element1, element2, array):
     if element1 not in array or element2 not in array:

@@ -1,5 +1,6 @@
 import pygame
 import pygame_gui
+
 from time import time
 from math import sqrt
 
@@ -9,8 +10,14 @@ import algorithms
 
 class Gui:
     def __init__(self, screen_width, screen_height):
+
+        self.screen_width = screen_width
+        self.screen_height = screen_height
+
         self.graph = Graph()
-        self.graph.random_fill(10, 15, (100, screen_width-300), (50, screen_height-50))
+        self.nr_of_nodes = 5
+        self.nr_of_edges = 10
+        self.graph.random_fill(self.nr_of_nodes, self.nr_of_edges, (100, self.screen_width-300), (50, self.screen_height-50))
         self.available_algorithms = ["Dfs", "Bfs", "Bovurkas"]
         self.selected_nodes = []
         self.currently_visualizing = False
@@ -25,12 +32,12 @@ class Gui:
         self.window = pygame.display.set_mode((screen_width, screen_height))
 
         self.clock = pygame.time.Clock()
-        self.font1 = pygame.font.SysFont("Comic Sans MS", 25)
-        self.font2 = pygame.font.SysFont("Comic Sans MS", 20)
+        self.font = pygame.font.SysFont("Gill Sans Nova", 30)
 
         self.gui_manager = pygame_gui.UIManager((screen_width, screen_height))
         self.visualize_button = pygame_gui.elements.UIButton(pygame.Rect((self.screen_width-120, 100), (100, 50)), "Visualize", self.gui_manager)
         self.algorithms_dropdown = pygame_gui.elements.ui_drop_down_menu.UIDropDownMenu(self.available_algorithms, self.available_algorithms[0], pygame.Rect((screen_width - 120, 50), (100, 30)), self.gui_manager)
+        self.reset_graph_button = pygame_gui.elements.UIButton(pygame.Rect((self.screen_width-120, 400), (100, 50)), "Reset graph", self.gui_manager)
 
     def run(self):
         while True:
@@ -61,6 +68,12 @@ class Gui:
                             self.visualize_algorithm(self.algorithms_dropdown.selected_option)
                         else:
                             print("Already visualizing")
+
+                    elif event.ui_element == self.reset_graph_button:
+                        if not self.currently_visualizing:
+                            self.graph.random_fill(self.nr_of_nodes, self.nr_of_edges, (100, self.screen_width - 300), (50, self.screen_height - 50))
+                        else:
+                            print("Cannot reset graph")
 
             self.gui_manager.process_events(event)
         self.handle_mouse()
@@ -94,10 +107,10 @@ class Gui:
         self.gui_manager.draw_ui(self.window)
 
         for edge in self.graph.edges:
-            edge.draw(self.window, self.font2)
+            edge.draw(self.window, self.font)
 
         for node in self.graph.nodes:
-            node.draw(self.window, self.font1)
+            node.draw(self.window)
 
         pygame.display.update()
 
@@ -112,12 +125,17 @@ class Gui:
         self.currently_visualizing = True
 
         if algorithm == "Dfs":
-            #algorithms.dfs(self, self.graph["A"], self.graph["D"])
-            algorithms.dfs(self, self.graph[self.selected_nodes[0]], self.graph[self.selected_nodes[1]])
+            if len(self.selected_nodes) == 2:
+                algorithms.dfs(self, self.graph[self.selected_nodes[0]], self.graph[self.selected_nodes[1]])
+            else:
+                algorithms.dfs(self, self.graph["A"], self.graph["D"])
             self.color_entire_graph()
 
         elif algorithm == "Bfs":
-            algorithms.bfs(self, [[None, self.graph[self.selected_nodes[0]]]], self.graph[self.selected_nodes[1]])
+            if len(self.selected_nodes) == 2:
+                algorithms.bfs(self, [[None, self.graph[self.selected_nodes[0]]]], self.graph[self.selected_nodes[1]])
+            else:
+                algorithms.bfs(self, [[None, self.graph["A"]]], self.graph["D"])
             self.color_entire_graph()
 
         elif algorithm == "Bovurkas":

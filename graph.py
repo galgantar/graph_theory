@@ -1,14 +1,14 @@
 import pygame
-from enum import Enum
 from random import randint
+from math import sqrt
 
 
-class Color(Enum):
-    RED = 1
-    GREEN = 2
-    BLUE = 3
-    WHITE = 4
-    BLACK = 5
+class Color:
+    RED = (255, 0, 0)
+    GREEN = (0, 255, 0)
+    BLUE = (0, 0, 255)
+    WHITE = (255, 255, 255)
+    BLACK = (0, 0, 0)
 
 
 class Edge:
@@ -18,7 +18,7 @@ class Edge:
         self.weight = weight
 
         self.color = (0, 0, 0)
-        #self.text_pos = self.calculate_text_pos()
+        self.text_pos = None
         self.text_color = (0, 0, 0)
 
     def __lt__(self, other):
@@ -30,35 +30,26 @@ class Edge:
     def __repr__(self):
         return f"Edge: {self.start_node.value}, {self.end_node.value}"
 
-    """def calculate_text_pos(self):
-        move_constant = 50
+    def calculate_text_pos(self):
+        move_constant = 20
+        vector = (self.start_node.position[0]-self.end_node.position[0], self.start_node.position[1]-self.end_node.position[1])
+        vec_len = sqrt(vector[0]**2+vector[1]**2)
+        normalized_vec = (vector[0]/vec_len, vector[1]/vec_len)
+        perpendicular_vec = (normalized_vec[1], -normalized_vec[0])
 
-        line_c = 1 if self.start_pos[0] - self.end_pos[0] == 0 else (self.start_pos[1] - self.end_pos[1]) // (self.start_pos[0] - self.end_pos[0])
-        move_c = 1 if line_c > 0 else -1
-
-        x = (self.start_pos[0] + self.end_pos[0]) // 2 + move_constant * move_c
-        y = (self.start_pos[1] + self.end_pos[1]) // 2 - move_constant
-        return x, y"""
+        x = (self.start_node.position[0] + self.end_node.position[0]) // 2 + round(move_constant*perpendicular_vec[0])
+        y = (self.start_node.position[1] + self.end_node.position[1]) // 2 + round(move_constant*perpendicular_vec[1])
+        self.text_pos = x, y
 
     def draw(self, window, font):
         pygame.draw.line(window, self.color, self.start_node.position, self.end_node.position, 2)
+
+        self.calculate_text_pos()
         font_surface = font.render(str(self.weight), False, self.text_color)
-        #window.blit(font_surface, (self.text_pos[0]-font_surface.get_width()//2, self.text_pos[1]-font_surface.get_height()//2))
+        window.blit(font_surface, (self.text_pos[0]-font_surface.get_width()//2, self.text_pos[1]-font_surface.get_height()//2))
 
     def color_element(self, color):
-        if color == Color.RED:
-            new_color = (255, 0, 0)
-        elif color == Color.GREEN:
-            new_color = (0, 255, 0)
-        elif color == Color.BLUE:
-            new_color = (0, 0, 255)
-        elif color == Color.WHITE:
-            new_color = (255, 255, 255)
-        elif color == Color.BLACK:
-            new_color = (0, 0, 0)
-
-        self.color = new_color
-        self.text_color = new_color
+        self.color = color
 
 
 class Node:
@@ -104,12 +95,8 @@ class Node:
         self.color = new_color
         self.text_color = new_color
 
-    def draw(self, window, font):
-        pygame.draw.circle(window, self.color, self.position, 20)
-        pygame.draw.circle(window, (255, 255, 255), self.position, 18)
-        font_surface = font.render(self.value, False, self.text_color)
-
-        window.blit(font_surface, (self.position[0]-font_surface.get_width()//2, self.position[1]-font_surface.get_height()//2))
+    def draw(self, window):
+        pygame.draw.circle(window, self.color, self.position, 7)
 
 
 class Graph:
