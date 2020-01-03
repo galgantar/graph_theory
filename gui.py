@@ -10,15 +10,14 @@ import algorithms
 
 class Gui:
     def __init__(self, screen_width, screen_height):
-
         self.screen_width = screen_width
         self.screen_height = screen_height
 
         self.graph = Graph()
-        self.nr_of_nodes = 5
-        self.nr_of_edges = 10
+        self.nr_of_nodes = 7
+        self.nr_of_edges = 20
         self.graph.random_fill(self.nr_of_nodes, self.nr_of_edges, (100, self.screen_width-300), (50, self.screen_height-50))
-        self.available_algorithms = ["Dfs", "Bfs", "Bovurkas"]
+        self.available_algorithms = ["Dfs", "Bfs", "Boruvkas", "Color"]
         self.selected_nodes = []
         self.currently_visualizing = False
         self.moving_node = None
@@ -27,17 +26,21 @@ class Gui:
         pygame.font.init()
         pygame.display.set_caption("Graph theory")
 
-        self.screen_width = screen_width
-        self.screen_height = screen_height
-        self.window = pygame.display.set_mode((screen_width, screen_height))
+        self.window = pygame.display.set_mode(size=(screen_width, screen_height))
 
         self.clock = pygame.time.Clock()
-        self.font = pygame.font.SysFont("Gill Sans Nova", 30)
+        self.font = pygame.font.SysFont("Gill Sans Nova", 25)
 
-        self.gui_manager = pygame_gui.UIManager((screen_width, screen_height))
-        self.visualize_button = pygame_gui.elements.UIButton(pygame.Rect((self.screen_width-120, 100), (100, 50)), "Visualize", self.gui_manager)
-        self.algorithms_dropdown = pygame_gui.elements.ui_drop_down_menu.UIDropDownMenu(self.available_algorithms, self.available_algorithms[0], pygame.Rect((screen_width - 120, 50), (100, 30)), self.gui_manager)
-        self.reset_graph_button = pygame_gui.elements.UIButton(pygame.Rect((self.screen_width-120, 400), (100, 50)), "Reset graph", self.gui_manager)
+        self.gui_manager = pygame_gui.UIManager(window_resolution=(screen_width, screen_height))
+        self.visualize_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.screen_width-120, 100), (100, 50)), text="Visualize", manager=self.gui_manager)
+
+        self.algorithms_dropdown = pygame_gui.elements.ui_drop_down_menu.UIDropDownMenu(
+            options_list=self.available_algorithms, starting_option=self.available_algorithms[0],
+            relative_rect=pygame.Rect((screen_width - 120, 50), (100, 30)), manager=self.gui_manager)
+
+        self.reset_graph_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.screen_width-120, 400), (100, 50)), text="Reset graph", manager=self.gui_manager)
 
     def run(self):
         while True:
@@ -128,20 +131,21 @@ class Gui:
             if len(self.selected_nodes) == 2:
                 algorithms.dfs(self, self.graph[self.selected_nodes[0]], self.graph[self.selected_nodes[1]])
             else:
-                algorithms.dfs(self, self.graph["A"], self.graph["D"])
-            self.color_entire_graph()
+                algorithms.dfs(self, self.graph.nodes[0], self.graph.nodes[-1])
 
         elif algorithm == "Bfs":
             if len(self.selected_nodes) == 2:
-                algorithms.bfs(self, [[None, self.graph[self.selected_nodes[0]]]], self.graph[self.selected_nodes[1]])
+                algorithms.bfs(self, [(None, self.graph[self.selected_nodes[0]])], self.graph[self.selected_nodes[1]])
             else:
-                algorithms.bfs(self, [[None, self.graph["A"]]], self.graph["D"])
-            self.color_entire_graph()
+                algorithms.bfs(self, [(None, self.graph.nodes[0])], self.graph.nodes[-1])
 
-        elif algorithm == "Bovurkas":
+        elif algorithm == "Boruvkas":
             algorithms.boruvkas(self)
-            self.color_entire_graph()
 
+        elif algorithm == "Color":
+            algorithms.color_graph(self)
+
+        self.color_entire_graph()
         self.currently_visualizing = False
 
     def color_entire_graph(self, color=Color.BLACK):
@@ -149,10 +153,10 @@ class Gui:
         self.color_array(self.graph.edges, color)
 
     @staticmethod
-    def calculate_distance(pos1, pos2):
-        return sqrt((pos1[0] - pos2[0]) ** 2 + (pos1[1] - pos2[1]) ** 2)
-
-    @staticmethod
     def color_array(array, color):
         for element in array:
             element.color_element(color)
+
+    @staticmethod
+    def calculate_distance(pos1, pos2):
+        return sqrt((pos1[0] - pos2[0]) ** 2 + (pos1[1] - pos2[1]) ** 2)

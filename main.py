@@ -8,7 +8,6 @@ def main():
     from gui import Gui
 
     gui = Gui(1000, 500)
-
     gui.run()
 
 
