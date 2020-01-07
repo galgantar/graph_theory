@@ -1,3 +1,4 @@
+from heapq import heappop, heappush, heapify
 from graph import Color
 
 
@@ -74,10 +75,10 @@ def bfs(gui, node_list, end, path=None, checked_pairs=None, first_call=True):
 
 def boruvkas(gui):
     if not gui.graph.weakly_connected:
-        print("Cannot run Boruvkas on unconnected graph")
+        print("Spanning tree doesn't exist")
         return None
 
-    involved_edges = []
+    involved_edges = set()
     forest = [[node] for node in gui.graph.nodes]
 
     while len(forest) > 1:
@@ -94,7 +95,7 @@ def boruvkas(gui):
                 if not cheapest_edges[edge.end_node.mark] or edge < cheapest_edges[edge.end_node.mark]:
                     cheapest_edges[edge.end_node.mark] = edge
 
-        involved_edges.extend(cheapest_edges)
+        involved_edges.update(cheapest_edges)
 
         new_forest = []
         for edge in cheapest_edges:
@@ -122,8 +123,9 @@ def boruvkas(gui):
 
         forest = new_forest
 
-    gui.color_array(gui.graph.nodes, gui.graph.nodes[0].color)
-    gui.color_array([e for e in gui.graph.edges if e in involved_edges], gui.graph.nodes[0].color)
+    chosen_color = next(iter(gui.graph.nodes)).color
+    gui.color_array(gui.graph.nodes, chosen_color)
+    gui.color_array([e for e in gui.graph.edges if e in involved_edges], chosen_color)
     gui.wait(5)
     return involved_edges
 
@@ -150,3 +152,36 @@ def color_graph(gui):
 
     gui.wait(5)
     return len(used_colors)
+
+
+def prims(gui):
+    if not gui.graph.weakly_connected:
+        print("Spanning tree doesn't exist")
+        return None
+
+    visited, min_tree = set(), set()
+    first_node = next(iter(gui.graph.nodes))
+    visited.add(first_node)
+    next_edge = [e for e in first_node.edges]
+    heapify(next_edge)
+
+    while len(visited) < gui.graph.order:
+        gui.color_entire_graph()
+        gui.color_array([e for e in gui.graph.edges if e in min_tree], Color.RED)
+        gui.color_array([n for n in gui.graph.nodes if n in visited], Color.RED)
+        gui.wait(1)
+
+        while True:
+            e = heappop(next_edge)
+            if e not in min_tree and (e.start_node not in visited or e.end_node not in visited): break
+        min_tree.add(e)
+        visited.add(e.end_node)
+        for edge in e.end_node.edges:
+            heappush(next_edge, edge)
+
+    gui.color_entire_graph()
+    gui.color_array([e for e in gui.graph.edges if e in min_tree], Color.RED)
+    gui.color_array([n for n in gui.graph.nodes if n in visited], Color.RED)
+    gui.wait(5)
+
+    return min_tree

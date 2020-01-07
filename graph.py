@@ -44,10 +44,17 @@ class Edge:
         return self.weight < other.weight
 
     def __eq__(self, other):
-        return (self.start_node == other.start_node and self.end_node == other.end_node) or (self.end_node == other.start_node and self.start_node == other.end_node)
+        return (self.start_node == other.start_node and self.end_node == other.end_node) or \
+               (self.end_node == other.start_node and self.start_node == other.end_node)
 
     def __repr__(self):
-        return f"Edge: {self.start_node.value}, {self.end_node.value}"
+        return f"({self.start_node}, {self.end_node}): {self.weight}"
+
+    def __hash__(self):
+        first, second = self.start_node.value, self.end_node.value
+        if second > first:
+            first, second = second, first
+        return hash(first + second)
 
     def calculate_text_pos(self):
         move_constant = 20
@@ -73,7 +80,7 @@ class Edge:
 
 class Node:
     def __init__(self, value, position):
-        self.edges = []
+        self.edges = set()
         self.value = value
         self.mark = None
 
@@ -103,7 +110,7 @@ class Node:
         self.mark = mark
 
     def add_edge(self, edge):
-        self.edges.append(edge)
+        self.edges.add(edge)
 
     def color_element(self, color):
         self.color = color
@@ -114,8 +121,8 @@ class Node:
 
 class Graph:
     def __init__(self):
-        self.edges = []
-        self.nodes = []
+        self.edges = set()
+        self.nodes = set()
 
     def __getitem__(self, item):
         for node in self.nodes:
@@ -132,7 +139,7 @@ class Graph:
         return string
 
     def add_node(self, name, position):
-        self.nodes.append(Node(name, position))
+        self.nodes.add(Node(name, position))
 
     @property
     def order(self):
@@ -144,7 +151,7 @@ class Graph:
 
     @property
     def weakly_connected(self):
-        start = self.nodes[0]
+        start = next(iter(self.nodes))
         next_to_check = [e.end_node for e in start.edges]
         checked_nodes = set()
 
@@ -171,7 +178,7 @@ class Graph:
         self[node2].add_edge(Edge(self[node2], self[node1], weight))
 
         if Edge(self[min(node1, node2)], self[max(node1, node2)], weight) not in self.edges:
-            self.edges.append(Edge(self[min(node1, node2)], self[max(node1, node2)], weight))
+            self.edges.add(Edge(self[min(node1, node2)], self[max(node1, node2)], weight))
 
     def random_fill(self, nr_of_nodes, nr_of_connections, width_range, height_range):
         self.nodes.clear()

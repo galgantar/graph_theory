@@ -14,10 +14,12 @@ class Gui:
         self.screen_height = screen_height
 
         self.graph = Graph()
-        self.nr_of_nodes = 7
-        self.nr_of_edges = 20
+        self.nr_of_nodes = 20
+        self.nr_of_edges = 30
+
         self.graph.random_fill(self.nr_of_nodes, self.nr_of_edges, (100, self.screen_width-300), (50, self.screen_height-50))
-        self.available_algorithms = ["Dfs", "Bfs", "Boruvkas", "Color"]
+
+        self.available_algorithms = ["Dfs", "Bfs", "Boruvkas", "Prims", "Color"]
         self.selected_nodes = []
         self.currently_visualizing = False
         self.moving_node = None
@@ -29,7 +31,7 @@ class Gui:
         self.window = pygame.display.set_mode(size=(screen_width, screen_height))
 
         self.clock = pygame.time.Clock()
-        self.font = pygame.font.SysFont("Gill Sans Nova", 25)
+        self.font = pygame.font.SysFont(name="Gill Sans Nova", size=25)
 
         self.gui_manager = pygame_gui.UIManager(window_resolution=(screen_width, screen_height))
         self.visualize_button = pygame_gui.elements.UIButton(
@@ -140,7 +142,10 @@ class Gui:
                 algorithms.bfs(self, [(None, self.graph.nodes[0])], self.graph.nodes[-1])
 
         elif algorithm == "Boruvkas":
-            algorithms.boruvkas(self)
+            print(algorithms.boruvkas(self))
+
+        elif algorithm == "Prims":
+            print(algorithms.prims(self))
 
         elif algorithm == "Color":
             algorithms.color_graph(self)
