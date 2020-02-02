@@ -141,6 +141,27 @@ class Graph:
     def add_node(self, name, position):
         self.nodes.add(Node(name, position))
 
+    @staticmethod
+    def are_connected(node1, node2):
+        return node2 in [e.end_node for e in node1.edges]
+
+    def get_edge(self, node1, node2):
+        if node1 == node2:
+            return None
+        if node1 > node2:
+            node1, node2 = node2, node1
+        for e in self.edges:
+            if e.start_node == node1 and e.end_node == node2:
+                return e
+        raise KeyError(f"Edge between {node1} and {node2} does not exist")
+
+    def cost_of_edge(self, node1, node2):
+        e = self.get_edge(node1, node2)
+        if not e:
+            return 0
+        else:
+            return e.weight
+
     @property
     def order(self):
         return len(self.nodes)
@@ -166,14 +187,14 @@ class Graph:
         return len(checked_nodes) == self.order
 
     @property
-    def strongly_connected(self):
+    def totally_connected(self):
         for node1 in self.nodes:
             for node2 in self.nodes:
-                if node1 is not node2 and (min(node1, node2), max(node1, node2)) not in [(e.start_node, e.end_node) for e in self.edges]:
+                if node1 is not node2 and not self.are_connected(node1, node2):
                     return False
         return True
 
-    def connect_nodes(self, node1, node2, weight):
+    def connect_nodes(self, node1, node2, weight=0):
         self[node1].add_edge(Edge(self[node1], self[node2], weight))
         self[node2].add_edge(Edge(self[node2], self[node1], weight))
 

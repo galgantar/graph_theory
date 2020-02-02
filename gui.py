@@ -16,10 +16,19 @@ class Gui:
         self.graph = Graph()
         self.nr_of_nodes = 20
         self.nr_of_edges = 30
+        self.graph.add_node("A", (100, 100))
+        self.graph.add_node("B", (200, 200))
+        self.graph.add_node("C", (300, 300))
+        self.graph.add_node("D", (400, 400))
+        self.graph.connect_nodes("A", "B", 1)
+        self.graph.connect_nodes("A", "D", 1)
+        self.graph.connect_nodes("A", "C", 10)
+        self.graph.connect_nodes("B", "C", 1)
+        self.graph.connect_nodes("B", "D", 1)
+        self.graph.connect_nodes("C", "D", 1)
+        #self.graph.random_fill(self.nr_of_nodes, self.nr_of_edges, (100, self.screen_width-300), (50, self.screen_height-50))
 
-        self.graph.random_fill(self.nr_of_nodes, self.nr_of_edges, (100, self.screen_width-300), (50, self.screen_height-50))
-
-        self.available_algorithms = ["Dfs", "Bfs", "Boruvkas", "Prims", "Color"]
+        self.available_algorithms = ["Dfs", "Bfs", "Boruvkas", "Prims", "Color", "TSP"]
         self.selected_nodes = []
         self.currently_visualizing = False
         self.moving_node = None
@@ -66,21 +75,20 @@ class Gui:
                 pygame.quit()
                 exit()
 
-            if event.type == pygame.USEREVENT:
-                if event.user_type == 'ui_button_pressed':
-                    if event.ui_element == self.visualize_button:
-                        if not self.currently_visualizing:
-                            self.visualize_algorithm(self.algorithms_dropdown.selected_option)
-                        else:
-                            print("Already visualizing")
+            if event.type == pygame.USEREVENT and event.user_type == "ui_button_pressed":
+                if event.ui_element == self.visualize_button:
+                    if not self.currently_visualizing:
+                        self.visualize_algorithm(self.algorithms_dropdown.selected_option)
+                    else:
+                        print("Already visualizing")
 
-                    elif event.ui_element == self.reset_graph_button:
-                        if not self.currently_visualizing:
-                            self.graph.random_fill(self.nr_of_nodes, self.nr_of_edges, (100, self.screen_width - 300), (50, self.screen_height - 50))
-                        else:
-                            print("Cannot reset graph")
-
+                elif event.ui_element == self.reset_graph_button:
+                    if not self.currently_visualizing:
+                        self.graph.random_fill(self.nr_of_nodes, self.nr_of_edges, (100, self.screen_width - 300), (50, self.screen_height - 50))
+                    else:
+                        print("Cannot reset graph")
             self.gui_manager.process_events(event)
+
         self.handle_mouse()
 
     def handle_mouse(self):
@@ -92,7 +100,7 @@ class Gui:
                     if node.value not in self.selected_nodes:
                         if len(self.selected_nodes) == 2:
                             self.selected_nodes.pop(0)
-                        self.selected_nodes.append(node.value)
+                        self.selected_nodes.append(node)
 
         if left:
             if not self.moving_node:
@@ -106,6 +114,11 @@ class Gui:
 
         else:
             self.moving_node = None
+
+    """def handle_keys(self):
+        keys = pygame.keys.get_pressed()
+        if keys[pygame.ENTER]:"""
+
 
     def draw_items(self):
         self.window.fill((255, 255, 255))
@@ -128,18 +141,19 @@ class Gui:
 
     def visualize_algorithm(self, algorithm):
         self.currently_visualizing = True
+        it = iter(self.graph.nodes)
 
         if algorithm == "Dfs":
             if len(self.selected_nodes) == 2:
-                algorithms.dfs(self, self.graph[self.selected_nodes[0]], self.graph[self.selected_nodes[1]])
+                algorithms.dfs(self, self.selected_nodes[0], self.selected_nodes[1])
             else:
-                algorithms.dfs(self, self.graph.nodes[0], self.graph.nodes[-1])
+                algorithms.dfs(self, next(it), next(it))
 
         elif algorithm == "Bfs":
             if len(self.selected_nodes) == 2:
-                algorithms.bfs(self, [(None, self.graph[self.selected_nodes[0]])], self.graph[self.selected_nodes[1]])
+                algorithms.bfs(self, (None, self.selected_nodes[0]), self.selected_nodes[1])
             else:
-                algorithms.bfs(self, [(None, self.graph.nodes[0])], self.graph.nodes[-1])
+                algorithms.bfs(self, [(None, next(it))], next(it))
 
         elif algorithm == "Boruvkas":
             print(algorithms.boruvkas(self))
@@ -149,6 +163,10 @@ class Gui:
 
         elif algorithm == "Color":
             algorithms.color_graph(self)
+
+        elif algorithm == "TSP":
+            start = next(it)
+            print(algorithms.TSP(self, start, start, self.graph.nodes))
 
         self.color_entire_graph()
         self.currently_visualizing = False

@@ -130,30 +130,6 @@ def boruvkas(gui):
     return involved_edges
 
 
-def color_graph(gui):
-    color_gen = Color.infinite_generator()
-    first_color = next(color_gen)
-    gui.graph.nodes[0].color = first_color
-    used_colors = [first_color]
-
-    for i in range(1, len(gui.graph.nodes)):
-        gui.graph.nodes[i].color = Color.NONE
-
-    for node in gui.graph.nodes:
-        if node.color == Color.NONE:
-            taken_colors = [e.end_node.color for e in node.edges if e.end_node.color != Color.NONE]
-            for color in used_colors:
-                if color not in taken_colors:
-                    node.color = color
-                    break
-            else:
-                node.color = next(color_gen)
-                used_colors.append(node.color)
-
-    gui.wait(5)
-    return len(used_colors)
-
-
 def prims(gui):
     if not gui.graph.weakly_connected:
         print("Spanning tree doesn't exist")
@@ -185,3 +161,61 @@ def prims(gui):
     gui.wait(5)
 
     return min_tree
+
+
+def color_graph(gui):
+    color_gen = Color.infinite_generator()
+    first_color = next(color_gen)
+    gui.graph.nodes[0].color = first_color
+    used_colors = [first_color]
+
+    for i in range(1, len(gui.graph.nodes)):
+        gui.graph.nodes[i].color = Color.NONE
+
+    for node in gui.graph.nodes:
+        if node.color == Color.NONE:
+            taken_colors = [e.end_node.color for e in node.edges if e.end_node.color != Color.NONE]
+            for color in used_colors:
+                if color not in taken_colors:
+                    node.color = color
+                    break
+            else:
+                node.color = next(color_gen)
+                used_colors.append(node.color)
+
+    gui.wait(5)
+    return len(used_colors)
+
+
+def TSP(gui, start, current, remaining, path=None, master=True):
+    if path is None: path = set()
+    if not gui.graph.totally_connected:
+        print("Can't calculate TSP - edges missing")
+        return None
+
+    if not remaining:
+        last_edge = gui.graph.get_edge(start, current)
+        if last_edge: path.add(last_edge)
+        gui.color_entire_graph()
+        gui.color_array(gui.graph.nodes, Color.RED)
+        gui.color_array([e for e in gui.graph.edges if e in path], Color.RED)
+        gui.wait(0.3)
+        return gui.graph.cost_of_edge(start, current), set([gui.graph.get_edge(start, current)])
+
+    minimal_cost = float("inf")
+    final_path = None
+
+    for node in remaining - set([current]):
+        e = gui.graph.get_edge(current, node)
+        cost, current_path = TSP(gui, start, node, remaining - set([node]), path.union(set([e])), False)
+        if cost + e.weight < minimal_cost:
+            minimal_cost = cost + e.weight
+            final_path = current_path.union(set([e]))
+
+    if master:
+        gui.color_entire_graph()
+        gui.color_array(gui.graph.nodes, Color.RED)
+        gui.color_array([e for e in gui.graph.edges if e in final_path], Color.RED)
+        gui.wait(5)
+
+    return minimal_cost, final_path
