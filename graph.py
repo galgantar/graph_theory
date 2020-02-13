@@ -59,7 +59,7 @@ class Edge:
     def calculate_text_pos(self):
         move_constant = 20
         vector = (self.start_node.position[0]-self.end_node.position[0], self.start_node.position[1]-self.end_node.position[1])
-        vec_len = sqrt(vector[0]**2+vector[1]**2)
+        vec_len = sqrt(vector[0]**2+vector[1]**2) + 0.001
         normalized_vec = (vector[0]/vec_len, vector[1]/vec_len)
         perpendicular_vec = (normalized_vec[1], -normalized_vec[0])
 
@@ -90,7 +90,7 @@ class Node:
         self.radius = 5
 
     def __eq__(self, other):
-        if type(other) == str:
+        if type(other) == int:
             return self.value == other
         elif type(other) == Node:
             return self.value == other.value
@@ -123,6 +123,7 @@ class Graph:
     def __init__(self):
         self.edges = set()
         self.nodes = set()
+        self.node_count = 0
 
     def __getitem__(self, item):
         for node in self.nodes:
@@ -138,8 +139,8 @@ class Graph:
         string += "}"
         return string
 
-    def add_node(self, name, position):
-        self.nodes.add(Node(name, position))
+    def add_node(self, position):
+        self.nodes.add(Node(len(self.nodes), position))
 
     @staticmethod
     def are_connected(node1, node2):
@@ -200,19 +201,22 @@ class Graph:
 
         if Edge(self[min(node1, node2)], self[max(node1, node2)], weight) not in self.edges:
             self.edges.add(Edge(self[min(node1, node2)], self[max(node1, node2)], weight))
+            return True
+
+        return False
 
     def random_fill(self, nr_of_nodes, nr_of_connections, width_range, height_range):
         self.nodes.clear()
         self.edges.clear()
 
-        start = ord("A")
         for i in range(nr_of_nodes):
-            self.add_node(chr(start + i), (randint(*width_range), randint(*height_range)))
+            self.add_node((randint(*width_range), randint(*height_range)))
 
-        for i in range(nr_of_connections):
+        while nr_of_connections:
             r1, r2 = 1, 1
             while r1 == r2:
-                r1 = randint(start, start + nr_of_nodes-1)
-                r2 = randint(start, start + nr_of_nodes-1)
+                r1 = randint(0, nr_of_nodes-1)
+                r2 = randint(0, nr_of_nodes-1)
 
-            self.connect_nodes(chr(r1), chr(r2), randint(1, 99))
+            if self.connect_nodes(r1, r2, randint(1, 99)):
+                nr_of_connections -= 1

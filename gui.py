@@ -16,22 +16,13 @@ class Gui:
         self.graph = Graph()
         self.nr_of_nodes = 20
         self.nr_of_edges = 30
-        self.graph.add_node("A", (100, 100))
-        self.graph.add_node("B", (200, 200))
-        self.graph.add_node("C", (300, 300))
-        self.graph.add_node("D", (400, 400))
-        self.graph.connect_nodes("A", "B", 1)
-        self.graph.connect_nodes("A", "D", 1)
-        self.graph.connect_nodes("A", "C", 10)
-        self.graph.connect_nodes("B", "C", 1)
-        self.graph.connect_nodes("B", "D", 1)
-        self.graph.connect_nodes("C", "D", 1)
-        #self.graph.random_fill(self.nr_of_nodes, self.nr_of_edges, (100, self.screen_width-300), (50, self.screen_height-50))
+        self.graph.random_fill(self.nr_of_nodes, self.nr_of_edges, (100, self.screen_width-300), (50, self.screen_height-50))
 
         self.available_algorithms = ["Dfs", "Bfs", "Boruvkas", "Prims", "Color", "TSP"]
         self.selected_nodes = []
         self.currently_visualizing = False
         self.moving_node = None
+        self.prev_click = None
 
         pygame.init()
         pygame.font.init()
@@ -60,6 +51,8 @@ class Gui:
     def refresh(self):
         self.check_events()
         delta_time = self.clock.tick(30) / 1000
+        self.handle_mouse()
+        self.handle_keys()
         self.gui_manager.update(delta_time)
 
         if not self.currently_visualizing:
@@ -89,8 +82,6 @@ class Gui:
                         print("Cannot reset graph")
             self.gui_manager.process_events(event)
 
-        self.handle_mouse()
-
     def handle_mouse(self):
         left, middle, right = pygame.mouse.get_pressed()
         mouse_pos = pygame.mouse.get_pos()
@@ -115,10 +106,15 @@ class Gui:
         else:
             self.moving_node = None
 
-    """def handle_keys(self):
-        keys = pygame.keys.get_pressed()
-        if keys[pygame.ENTER]:"""
+    def handle_keys(self):
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_RETURN]:
+            if not self.prev_click or time() - self.prev_click > 0.5:
+                self.graph.add_node(pygame.mouse.get_pos())
+                self.prev_click = time()
 
+        if keys[pygame.K_SPACE]:
+            self.graph.connect_nodes(self.selected_nodes[0], self.selected_nodes[1], 10)
 
     def draw_items(self):
         self.window.fill((255, 255, 255))
