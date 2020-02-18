@@ -9,68 +9,39 @@ def one_after_another(element1, element2, array):
     return abs(array.index(element1) - array.index(element2)) == 1
 
 
-def dfs(gui, current, end, path=None):
+def dfs(gui, current, path=None):
     if path is None: path=[]
     path.append(current.value)
 
     gui.color_entire_graph()
-    gui.color_array([e for e in gui.graph.edges if one_after_another(e.start_node.value, e.end_node.value, path)], Color.RED)
+    gui.color_array([e for e in gui.graph.edges if one_after_another(e.first_node.value, e.second_node.value, path)], Color.RED)
     gui.color_array([n for n in gui.graph.nodes if n.value in path], Color.RED)
     gui.wait(1)
 
-    if current.value == end.value:
+    for e in gui.graph.get_edges_from_node(current):
+        if e.second_node.value not in path:
+            dfs(gui, e.second_node, path.copy())
+
+
+def bfs(gui, start_node):
+    checked_pairs = [(None, start_node)]
+    next_to_check = [start_node]
+
+    while next_to_check:
         gui.color_entire_graph()
-        gui.color_array([e for e in gui.graph.edges if one_after_another(e.start_node.value, e.end_node.value, path)], Color.GREEN)
-        gui.color_array([n for n in gui.graph.nodes if n.value in path], Color.GREEN)
-        gui.wait(5)
-        return path
+        gui.color_array([node for node in gui.graph.nodes if node.value in (second for first, second in checked_pairs)],
+                        Color.RED)
+        gui.color_array([e for e in gui.graph.edges if (e.first_node.value, e.second_node.value) in checked_pairs
+                         or (e.second_node.value, e.first_node.value) in checked_pairs], Color.RED)
+        gui.wait(1)
 
-    for e in current.edges:
-        if e.end_node.value not in path:
-            new_path = dfs(gui, e.end_node, end, path.copy())
-            if new_path:
-                return new_path
+        new_nodes_to_check = []
+        for node in next_to_check:
+            neighbours = [e.second_node for e in gui.graph.get_edges_from_node(node) if e.second_node not in (p[1] for p in checked_pairs)]
+            new_nodes_to_check.extend(neighbours)
+            checked_pairs.extend([(node, n) for n in neighbours])
 
-    return None
-
-
-def bfs(gui, node_list, end, path=None, checked_pairs=None, first_call=True):
-    if path is None: path=[]
-    if checked_pairs is None: checked_pairs=[]
-
-    gui.color_entire_graph()
-    gui.color_array([node for node in gui.graph.nodes if node.value in (second for first, second in checked_pairs)], Color.RED)
-    gui.color_array([e for e in gui.graph.edges if (e.start_node.value, e.end_node.value) in checked_pairs], Color.RED)
-    gui.wait(1)
-
-    new_node_list = []
-    for first, second in node_list:
-        if second.value == end.value:
-            path.append(second.value)
-            return path, first.value
-
-        elif second.value not in [second for first, second in checked_pairs]:
-            new_node_list.extend([(e.start_node, e.end_node) for e in second.edges])
-            if not first_call:
-                checked_pairs.append((first.value, second.value))
-            else:
-                checked_pairs.append((None, second.value))
-
-    if new_node_list:
-        path, prev_val = bfs(gui, new_node_list, end, path.copy(), checked_pairs, False)
-        if path and prev_val:
-            path.append(prev_val)
-            if first_call:
-                gui.color_entire_graph()
-                gui.color_array([node for node in gui.graph.nodes if node.value in path], Color.GREEN)
-                gui.color_array([e for e in gui.graph.edges if e.start_node in path and e.end_node in path], Color.GREEN)
-                gui.wait(7)
-                return reversed(path)
-            else:
-                for first, second in node_list:
-                    if second.value == prev_val:
-                        return path, first.value
-    return None, None
+        next_to_check = new_nodes_to_check
 
 
 def boruvkas(gui):
@@ -89,11 +60,11 @@ def boruvkas(gui):
         cheapest_edges = [None for _ in range(len(forest))]
 
         for edge in gui.graph.edges:
-            if edge.start_node.mark != edge.end_node.mark:
-                if not cheapest_edges[edge.start_node.mark] or edge < cheapest_edges[edge.start_node.mark]:
-                    cheapest_edges[edge.start_node.mark] = edge
-                if not cheapest_edges[edge.end_node.mark] or edge < cheapest_edges[edge.end_node.mark]:
-                    cheapest_edges[edge.end_node.mark] = edge
+            if edge.first_node.mark != edge.second_node.mark:
+                if not cheapest_edges[edge.first_node.mark] or edge < cheapest_edges[edge.first_node.mark]:
+                    cheapest_edges[edge.first_node.mark] = edge
+                if not cheapest_edges[edge.second_node.mark] or edge < cheapest_edges[edge.second_node.mark]:
+                    cheapest_edges[edge.second_node.mark] = edge
 
         involved_edges.update(cheapest_edges)
 
@@ -101,11 +72,11 @@ def boruvkas(gui):
         for edge in cheapest_edges:
             new_component = []
             for component in forest:
-                if edge.start_node in component or edge.end_node in component:
+                if edge.first_node in component or edge.second_node in component:
                     new_component.extend(component)
 
             for component in new_forest:
-                if edge.start_node in component or edge.end_node in component:
+                if edge.first_node in component or edge.second_node in component:
                     component.extend(new_component)
                     break
             else:
@@ -117,8 +88,8 @@ def boruvkas(gui):
         for node in gui.graph.nodes:
             node.color_element(component_colors[node.mark])
         for e in gui.graph.edges:
-            if e.start_node.mark == e.end_node.mark and e in involved_edges:
-                e.color_element(component_colors[e.start_node.mark])
+            if e.first_node.mark == e.second_node.mark and e in involved_edges:
+                e.color_element(component_colors[e.first_node.mark])
         gui.wait(7)
 
         forest = new_forest
@@ -138,8 +109,8 @@ def prims(gui):
     visited, min_tree = set(), set()
     first_node = next(iter(gui.graph.nodes))
     visited.add(first_node)
-    next_edge = [e for e in first_node.edges]
-    heapify(next_edge)
+    next_edges = [e for e in gui.graph.get_edges_from_node(first_node)]
+    heapify(next_edges)
 
     while len(visited) < gui.graph.order:
         gui.color_entire_graph()
@@ -148,12 +119,12 @@ def prims(gui):
         gui.wait(1)
 
         while True:
-            e = heappop(next_edge)
-            if e not in min_tree and (e.start_node not in visited or e.end_node not in visited): break
+            e = heappop(next_edges)
+            if e not in min_tree and (e.first_node not in visited or e.second_node not in visited): break
         min_tree.add(e)
-        visited.add(e.end_node)
-        for edge in e.end_node.edges:
-            heappush(next_edge, edge)
+        visited.add(e.second_node)
+        for edge in gui.graph.get_edges_from_node(e.second_node):
+            heappush(next_edges, edge)
 
     gui.color_entire_graph()
     gui.color_array([e for e in gui.graph.edges if e in min_tree], Color.RED)
@@ -166,15 +137,17 @@ def prims(gui):
 def color_graph(gui):
     color_gen = Color.infinite_generator()
     first_color = next(color_gen)
-    gui.graph.nodes[0].color = first_color
     used_colors = [first_color]
 
-    for i in range(1, len(gui.graph.nodes)):
-        gui.graph.nodes[i].color = Color.NONE
+    for i, node in enumerate(gui.graph.nodes):
+        if i == 0:
+            node.color = first_color
+        else:
+            node.color = Color.NONE
 
     for node in gui.graph.nodes:
         if node.color == Color.NONE:
-            taken_colors = [e.end_node.color for e in node.edges if e.end_node.color != Color.NONE]
+            taken_colors = [e.second_node.color for e in gui.graph.get_edges_from_node(node) if e.second_node.color != Color.NONE]
             for color in used_colors:
                 if color not in taken_colors:
                     node.color = color

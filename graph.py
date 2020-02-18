@@ -31,9 +31,9 @@ class Color:
 
 
 class Edge:
-    def __init__(self, start_node, end_node, weight):
-        self.start_node = start_node
-        self.end_node = end_node
+    def __init__(self, first_node, second_node, weight):
+        self.first_node = first_node
+        self.second_node = second_node
         self.weight = weight
 
         self.color = (0, 0, 0)
@@ -44,31 +44,34 @@ class Edge:
         return self.weight < other.weight
 
     def __eq__(self, other):
-        return (self.start_node == other.start_node and self.end_node == other.end_node) or \
-               (self.end_node == other.start_node and self.start_node == other.end_node)
+        return (self.first_node == other.first_node and self.second_node == other.second_node) or \
+               (self.second_node == other.first_node and self.first_node == other.second_node)
 
     def __repr__(self):
-        return f"({self.start_node}, {self.end_node}): {self.weight}"
+        return f"({self.first_node}, {self.second_node}): {self.weight}"
 
     def __hash__(self):
-        first, second = self.start_node.value, self.end_node.value
+        first, second = self.first_node.value, self.second_node.value
         if second > first:
             first, second = second, first
         return hash(first + second)
 
+    def contains(self, item):
+        return self.first_node == item or self.second_node == item
+
     def calculate_text_pos(self):
         move_constant = 20
-        vector = (self.start_node.position[0]-self.end_node.position[0], self.start_node.position[1]-self.end_node.position[1])
+        vector = (self.first_node.position[0]-self.second_node.position[0], self.first_node.position[1]-self.second_node.position[1])
         vec_len = sqrt(vector[0]**2+vector[1]**2) + 0.001
         normalized_vec = (vector[0]/vec_len, vector[1]/vec_len)
         perpendicular_vec = (normalized_vec[1], -normalized_vec[0])
 
-        x = (self.start_node.position[0] + self.end_node.position[0]) // 2 + round(move_constant*perpendicular_vec[0])
-        y = (self.start_node.position[1] + self.end_node.position[1]) // 2 + round(move_constant*perpendicular_vec[1])
+        x = (self.first_node.position[0] + self.second_node.position[0]) // 2 + round(move_constant*perpendicular_vec[0])
+        y = (self.first_node.position[1] + self.second_node.position[1]) // 2 + round(move_constant*perpendicular_vec[1])
         self.text_pos = x, y
 
     def draw(self, window, font):
-        pygame.draw.line(window, self.color, self.start_node.position, self.end_node.position, 2)
+        pygame.draw.line(window, self.color, self.first_node.position, self.second_node.position, 2)
 
         self.calculate_text_pos()
         font_surface = font.render(str(self.weight), False, self.text_color)
@@ -80,7 +83,6 @@ class Edge:
 
 class Node:
     def __init__(self, value, position):
-        self.edges = set()
         self.value = value
         self.mark = None
 
@@ -101,7 +103,7 @@ class Node:
         return self.value < other.value
 
     def __repr__(self):
-        return self.value
+        return str(self.value)
 
     def __hash__(self):
         return hash(self.value)
@@ -134,17 +136,42 @@ class Graph:
         string = "Graph: {\n"
         for n in self.nodes:
             string += f"\tNode {n}: ("
-            string += ", ".join(e.end_node.value for e in n.edges)
+            string += ", ".join(str(e.second_node.value) for e in self.get_edges_from_node(n))
             string += ")\n"
         string += "}"
         return string
 
+    def get_edges_from_node(self, node):
+        for e in self.edges:
+            if e.first_node == node:
+                yield Edge(node, e.second_node, e.weight)
+            elif e.second_node == node:
+                yield Edge(node, e.first_node, e.weight)
+
     def add_node(self, position):
         self.nodes.add(Node(len(self.nodes), position))
 
-    @staticmethod
-    def are_connected(node1, node2):
-        return node2 in [e.end_node for e in node1.edges]
+    def connect_nodes(self, node1, node2, weight=0):
+        """self[node1].add_edge(Edge(self[node1], self[node2], weight))
+        self[node2].add_edge(Edge(self[node2], self[node1], weight))"""
+
+        if Edge(self[min(node1, node2)], self[max(node1, node2)], weight) not in self.edges:
+            self.edges.add(Edge(self[min(node1, node2)], self[max(node1, node2)], weight))
+            return True
+
+        return False
+
+    def remove_node(self, node):
+        self.nodes.remove(node)
+        self.edges = set([e for e in self.edges if not e.contains(node)])
+        for n in self.nodes:
+            n.remove_edge_with_node(node)
+
+    def are_connected(self, node1, node2):
+        for e in self.get_edges_from_node(node1):
+            if e.second_node == node2:
+                return True
+        return False
 
     def get_edge(self, node1, node2):
         if node1 == node2:
@@ -152,7 +179,7 @@ class Graph:
         if node1 > node2:
             node1, node2 = node2, node1
         for e in self.edges:
-            if e.start_node == node1 and e.end_node == node2:
+            if e.first_node == node1 and e.second_node == node2:
                 return e
         raise KeyError(f"Edge between {node1} and {node2} does not exist")
 
@@ -174,7 +201,7 @@ class Graph:
     @property
     def weakly_connected(self):
         start = next(iter(self.nodes))
-        next_to_check = [e.end_node for e in start.edges]
+        next_to_check = [start]
         checked_nodes = set()
 
         while next_to_check:
@@ -182,7 +209,7 @@ class Graph:
             for node in next_to_check:
                 if node.value not in checked_nodes:
                     checked_nodes.add(node)
-                    new_check_arr.extend([e.end_node for e in node.edges])
+                    new_check_arr.extend([e.second_node for e in self.get_edges_from_node(node)])
             next_to_check = new_check_arr
 
         return len(checked_nodes) == self.order
@@ -192,20 +219,15 @@ class Graph:
         for node1 in self.nodes:
             for node2 in self.nodes:
                 if node1 is not node2 and not self.are_connected(node1, node2):
+                    print(node1, node2, "not connected")
+                    print(self)
                     return False
         return True
 
-    def connect_nodes(self, node1, node2, weight=0):
-        self[node1].add_edge(Edge(self[node1], self[node2], weight))
-        self[node2].add_edge(Edge(self[node2], self[node1], weight))
-
-        if Edge(self[min(node1, node2)], self[max(node1, node2)], weight) not in self.edges:
-            self.edges.add(Edge(self[min(node1, node2)], self[max(node1, node2)], weight))
-            return True
-
-        return False
-
     def random_fill(self, nr_of_nodes, nr_of_connections, width_range, height_range):
+        if nr_of_connections > nr_of_nodes**2:
+            raise ValueError("Number of connections if too big")
+
         self.nodes.clear()
         self.edges.clear()
 
