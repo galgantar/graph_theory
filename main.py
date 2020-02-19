@@ -7,7 +7,7 @@ def update_path():
 def main():
     from gui import Gui
 
-    gui = Gui(1000, 500)
+    gui = Gui(1200, 600)
     gui.run()
 
 

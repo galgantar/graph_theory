@@ -4,6 +4,8 @@ import pygame_gui
 from time import time
 from math import sqrt
 import pickle
+import os
+from collections import namedtuple
 
 from graph import Color, Graph
 import algorithms
@@ -11,6 +13,8 @@ import algorithms
 
 class Gui:
     def __init__(self, screen_width, screen_height):
+        os.environ['SDL_VIDEO_WINDOW_POS'] = "50,50"
+
         self.screen_width = screen_width
         self.screen_height = screen_height
 
@@ -22,8 +26,9 @@ class Gui:
         self.selected_nodes = []
         self.currently_visualizing = False
         self.moving_node = None
-        self.prev_click_backspace = None
+        self.prev_click_tab = None
         self.prev_click_left_mouse = 0
+        self.currently_weighting_edge = None
 
         pygame.init()
         pygame.font.init()
@@ -34,26 +39,66 @@ class Gui:
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont(name="Gill Sans Nova", size=25)
 
-        self.gui_manager = pygame_gui.UIManager(window_resolution=(screen_width, screen_height))
-        self.visualize_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((self.screen_width-120, 100), (100, 50)), text="Visualize", manager=self.gui_manager)
+        self.initialize_gui_elements()
 
-        self.load_graph_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((self.screen_width - 120, 250), (100, 50)), text="Load",
+    def initialize_gui_elements(self):
+        C = namedtuple('C', ["a", "b", "c"])  # representing color with pygame_gui interface
+        self.gui_manager = pygame_gui.UIManager(window_resolution=(self.screen_width, self.screen_height))
+        self.visualize_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.screen_width - 275, 230), (100, 50)), text="Visualize!",
             manager=self.gui_manager)
 
         self.available_algorithms = ["Dfs", "Bfs", "Boruvkas", "Prims", "Color", "TSP"]
         self.algorithms_dropdown = pygame_gui.elements.ui_drop_down_menu.UIDropDownMenu(
             options_list=self.available_algorithms, starting_option=self.available_algorithms[0],
-            relative_rect=pygame.Rect((screen_width - 120, 50), (100, 30)), manager=self.gui_manager)
+            relative_rect=pygame.Rect((self.screen_width - 275, 200), (100, 30)), manager=self.gui_manager)
 
-        self.loadable_graphs = ["Tree"]
+        loadable_graphs = self.list_loadable_graphs()
+        starting_option = loadable_graphs[0] if loadable_graphs else " "
         self.load_graphs_dropdown = pygame_gui.elements.ui_drop_down_menu.UIDropDownMenu(
-            options_list=self.loadable_graphs, starting_option=self.loadable_graphs[0],
-            relative_rect=pygame.Rect((screen_width - 120, 200), (100, 30)), manager=self.gui_manager)
+            options_list=loadable_graphs, starting_option=starting_option,
+            relative_rect=pygame.Rect((self.screen_width - 120, 200), (100, 30)), manager=self.gui_manager)
+
+        self.load_graph_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.screen_width - 120, 230), (100, 40)), text="Uvozi",
+            manager=self.gui_manager)
+
+        self.save_graph_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((self.screen_width - 120, 270), (100, 40)), text="Izvozi",
+            manager=self.gui_manager)
 
         self.reset_graph_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((self.screen_width-120, 400), (100, 50)), text="Reset graph", manager=self.gui_manager)
+            relative_rect=pygame.Rect((self.screen_width - 120, 370), (100, 50)), text="Generiraj!",
+            manager=self.gui_manager)
+
+        self.weight_input = pygame_gui.elements.ui_text_entry_line.UITextEntryLine(
+            relative_rect=pygame.Rect((self.screen_width - 275, 370), (100, 50)), manager=self.gui_manager)
+
+        self.test_label = pygame_gui.elements.ui_text_box.UITextBox(
+            relative_rect=pygame.Rect((self.screen_width - 275, 10), (250, 130)), html_text=
+            """<b>Vizualizator grafov</b> by Gal Gantar\
+                kontrole: TAB; ENTER; MIDDLE, LEFT, RIGTH MOUSE\
+            """,
+            manager=self.gui_manager)
+
+        self.label1 = pygame_gui.elements.ui_label.UILabel(
+            relative_rect=pygame.Rect((self.screen_width - 275, 180), (100, 20)), text="ALGORITMI:", manager=self.gui_manager)
+        self.label2 = pygame_gui.elements.ui_label.UILabel(
+            relative_rect=pygame.Rect((self.screen_width - 120, 180), (100, 20)), text="UVOZI GRAF:", manager=self.gui_manager)
+        self.label3 = pygame_gui.elements.ui_label.UILabel(
+            relative_rect=pygame.Rect((self.screen_width - 275, 350), (100, 20)), text="NOVA UTEŽ:", manager=self.gui_manager)
+
+        self.label4 = pygame_gui.elements.ui_label.UILabel(
+            relative_rect=pygame.Rect((self.screen_width - 130, 350), (130, 20)), text="NAKLJUČNI GRAF:", manager=self.gui_manager)
+
+        self.label1.bg_colour, self.label1.text_colour = C(100, 100, 100), C(255, 255, 255)
+        self.label2.bg_colour, self.label2.text_colour = C(100, 100, 100), C(255, 255, 255)
+        self.label3.bg_colour, self.label3.text_colour = C(100, 100, 100), C(255, 255, 255)
+        self.label4.bg_colour, self.label4.text_colour = C(100, 100, 100), C(255, 255, 255)
+        self.label1.rebuild()
+        self.label2.rebuild()
+        self.label3.rebuild()
+        self.label4.rebuild()
 
     def run(self):
         while True:
@@ -64,6 +109,7 @@ class Gui:
         delta_time = self.clock.tick(30) / 1000
         self.handle_mouse()
         self.handle_keys()
+        self.update_menus()
         self.gui_manager.update(delta_time)
 
         if not self.currently_visualizing:
@@ -88,14 +134,18 @@ class Gui:
 
                 elif event.ui_element == self.reset_graph_button:
                     if not self.currently_visualizing:
-                        self.graph.random_fill(self.nr_of_nodes, self.nr_of_edges, (100, self.screen_width - 300), (50, self.screen_height - 50))
+                        self.graph.random_fill(self.nr_of_nodes, self.nr_of_edges, (30, self.screen_width - 400), (30, self.screen_height - 30))
                     else:
                         print("Cannot reset graph")
 
-                elif event.ui_element == self.load_graph_button:
-                    self.save_graph_to_a_file("tree.pkl")
-                    self.load_graph_from_a_file("tree.pkl")
+                elif event.ui_element == self.save_graph_button:
+                    self.save_custom_graph()
 
+                elif event.ui_element == self.load_graph_button:
+                    try:
+                        self.load_graph_from_a_file(f"{self.load_graphs_dropdown.selected_option}.pkl")
+                    except FileNotFoundError:
+                        pass
 
             self.gui_manager.process_events(event)
 
@@ -113,7 +163,15 @@ class Gui:
                     else:
                         self.selected_nodes.remove(node)
 
-                self.prev_click_left_mouse = time()
+                    break
+
+            for edge in self.graph.edges:
+                if self.calculate_distance(edge.text_pos, mouse_pos) < 10:
+                    self.currently_weighting_edge = edge
+                    self.weight_input.set_text(str(edge.weight))
+                    break
+
+            self.prev_click_left_mouse = time()
 
         if left:
             if not self.moving_node:
@@ -123,7 +181,11 @@ class Gui:
                         pygame.mouse.get_rel()
             else:
                 pos_change = pygame.mouse.get_rel()
-                self.moving_node.position = self.moving_node.position[0]+pos_change[0], self.moving_node.position[1]+pos_change[1]
+
+                if self.moving_node.position[0]+pos_change[0] < self.screen_width - 320:
+                    self.moving_node.position = self.moving_node.position[0]+pos_change[0], self.moving_node.position[1]
+
+                self.moving_node.position = self.moving_node.position[0], self.moving_node.position[1]+pos_change[1]
 
         else:
             self.moving_node = None
@@ -136,17 +198,23 @@ class Gui:
 
     def handle_keys(self):
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_RETURN]:
-            if not self.prev_click_backspace or time() - self.prev_click_backspace > 0.5:
-                self.graph.add_node(pygame.mouse.get_pos())
-                self.prev_click_backspace = time()
+        if keys[pygame.K_TAB]:
+            mouse_pos = pygame.mouse.get_pos()
+            if (not self.prev_click_tab or time() - self.prev_click_tab > 0.5) and mouse_pos[0] < self.screen_width-300:
+                self.graph.add_node(mouse_pos)
+                self.prev_click_tab = time()
 
         if keys[pygame.K_SPACE] and len(self.selected_nodes) == 2:
             self.graph.connect_nodes(self.selected_nodes[0], self.selected_nodes[1], 10)
             self.selected_nodes = []
 
+        if keys[pygame.K_RETURN] and self.currently_weighting_edge:
+            self.currently_weighting_edge.weight = abs(int(self.weight_input.get_text()))
+            self.currently_weighting_edge = None
+
     def draw_items(self):
         self.window.fill((255, 255, 255))
+        pygame.draw.rect(self.window, (100, 100, 100), (self.screen_width-300, 0, 300, self.screen_height))
         self.gui_manager.draw_ui(self.window)
 
         for edge in self.graph.edges:
@@ -163,6 +231,9 @@ class Gui:
             t1 = time()
             self.refresh()
             t += time() - t1
+
+    def update_menus(self):
+        self.load_graphs_dropdown.options_list = self.list_loadable_graphs()
 
     def visualize_algorithm(self, algorithm):
         self.currently_visualizing = True
@@ -208,6 +279,14 @@ class Gui:
     @staticmethod
     def calculate_distance(pos1, pos2):
         return sqrt((pos1[0] - pos2[0]) ** 2 + (pos1[1] - pos2[1]) ** 2)
+
+    @staticmethod
+    def list_loadable_graphs():
+        return list(sorted(f.strip(".pkl") for f in os.listdir("saved_graphs")))
+
+    def save_custom_graph(self):
+        custom_graphs = len([name for name in self.list_loadable_graphs() if "custom_" in name])
+        self.save_graph_to_a_file(f"custom_{custom_graphs+1}.pkl")
 
     def save_graph_to_a_file(self, filename):
         with open(f"saved_graphs/{filename}", "wb") as file:
