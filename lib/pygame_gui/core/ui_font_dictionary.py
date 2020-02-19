@@ -124,7 +124,7 @@ class UIFontDictionary:
                                                                    "'" + font_name + "',"
                                                                    " 'point_size': " + str(font_size) + ","
                                                                    " 'style': '" + style_string + "'}")
-            warnings.warn(warning_string, UserWarning)
+            #  warnings.warn(warning_string, UserWarning)
             self.preload_font(font_size, font_name, bold, italic)
             return self.loaded_fonts[font_id]
         else:
