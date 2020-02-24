@@ -7,8 +7,24 @@ import pickle
 import os
 from collections import namedtuple
 
-from graph import Color, Graph
+from graph import Graph
+from color import Color
 import algorithms
+
+
+
+class CustomDropdown(pygame_gui.elements.ui_drop_down_menu.UIDropDownMenu):
+    def __init__(self, screen_width, screen_height, rect, options, starting_option, saved_manager):
+        self.saved_manager = saved_manager
+        self.screen_width = screen_width
+        self.screen_height = screen_height
+        self.bottom_rect = rect
+
+        super().__init__(options, starting_option, rect, self.saved_manager)
+
+    def rebuild(self, new_options_list):
+        super().kill()
+        super().__init__(new_options_list, new_options_list[0], self.bottom_rect, self.saved_manager)
 
 
 class Gui:
@@ -21,7 +37,6 @@ class Gui:
         self.graph = Graph()
         self.nr_of_nodes = 20
         self.nr_of_edges = 30
-        #self.graph.random_fill(self.nr_of_nodes, self.nr_of_edges, (100, self.screen_width-300), (50, self.screen_height-50))
 
         self.selected_nodes = []
         self.currently_visualizing = False
@@ -53,11 +68,10 @@ class Gui:
             options_list=self.available_algorithms, starting_option=self.available_algorithms[0],
             relative_rect=pygame.Rect((self.screen_width - 275, 200), (100, 30)), manager=self.gui_manager)
 
-        loadable_graphs = self.list_loadable_graphs()
-        starting_option = loadable_graphs[0] if loadable_graphs else " "
-        self.load_graphs_dropdown = pygame_gui.elements.ui_drop_down_menu.UIDropDownMenu(
-            options_list=loadable_graphs, starting_option=starting_option,
-            relative_rect=pygame.Rect((self.screen_width - 120, 200), (100, 30)), manager=self.gui_manager)
+        self.loadable_graphs = self.list_loadable_graphs()
+        starting_option = self.loadable_graphs[0] if self.loadable_graphs else " "
+        self.load_graphs_dropdown = CustomDropdown(self.screen_width, self.screen_height, pygame.Rect((self.screen_width - 120, 200), (100, 30)),
+                                                   self.loadable_graphs, starting_option, self.gui_manager)
 
         self.load_graph_button = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect((self.screen_width - 120, 230), (100, 40)), text="Uvozi",
@@ -144,6 +158,7 @@ class Gui:
                 elif event.ui_element == self.load_graph_button:
                     try:
                         self.load_graph_from_a_file(f"{self.load_graphs_dropdown.selected_option}.pkl")
+                        self.selected_nodes.clear()
                     except FileNotFoundError:
                         pass
 
@@ -166,7 +181,7 @@ class Gui:
                     break
 
             for edge in self.graph.edges:
-                if self.calculate_distance(edge.text_pos, mouse_pos) < 10:
+                if self.calculate_distance(edge.text_pos, mouse_pos) < 20:
                     self.currently_weighting_edge = edge
                     self.weight_input.set_text(str(edge.weight))
                     break
@@ -209,8 +224,12 @@ class Gui:
             self.selected_nodes = []
 
         if keys[pygame.K_RETURN] and self.currently_weighting_edge:
-            self.currently_weighting_edge.weight = abs(int(self.weight_input.get_text()))
-            self.currently_weighting_edge = None
+            try:
+                self.currently_weighting_edge.weight = abs(int(self.weight_input.get_text()))
+                self.currently_weighting_edge = None
+
+            except ValueError:
+                pass
 
     def draw_items(self):
         self.window.fill((255, 255, 255))
@@ -233,7 +252,10 @@ class Gui:
             t += time() - t1
 
     def update_menus(self):
-        self.load_graphs_dropdown.options_list = self.list_loadable_graphs()
+        new_loadable_graphs = self.list_loadable_graphs()
+        if self.loadable_graphs != new_loadable_graphs:
+            self.load_graphs_dropdown.rebuild(new_loadable_graphs)
+            self.loadable_graphs = new_loadable_graphs
 
     def visualize_algorithm(self, algorithm):
         self.currently_visualizing = True

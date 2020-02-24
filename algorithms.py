@@ -1,5 +1,5 @@
 from heapq import heappop, heappush, heapify
-from graph import Color
+from color import Color
 
 
 def one_after_another(element1, element2, array):
@@ -9,18 +9,18 @@ def one_after_another(element1, element2, array):
     return abs(array.index(element1) - array.index(element2)) == 1
 
 
-def dfs(gui, current, path=None):
-    if path is None: path=[]
-    path.append(current.value)
+def dfs(gui, current, visited=None):
+    if visited is None: visited=[]
+    visited.append(current.value)
 
     gui.color_entire_graph()
-    gui.color_array([e for e in gui.graph.edges if one_after_another(e.first_node.value, e.second_node.value, path)], Color.RED)
-    gui.color_array([n for n in gui.graph.nodes if n.value in path], Color.RED)
+    gui.color_array([e for e in gui.graph.edges if one_after_another(e.first_node.value, e.second_node.value, visited)], Color.RED)
+    gui.color_array([n for n in gui.graph.nodes if n.value in visited], Color.RED)
     gui.wait(1)
 
     for e in gui.graph.get_edges_from_node(current):
-        if e.second_node.value not in path:
-            dfs(gui, e.second_node, path.copy())
+        if e.second_node.value not in visited:
+            dfs(gui, e.second_node, visited)
 
 
 def bfs(gui, start_node):
@@ -49,8 +49,8 @@ def boruvkas(gui):
         print("Spanning tree doesn't exist")
         return None
 
-    involved_edges = set()
-    forest = [[node] for node in gui.graph.nodes]
+    forest = [set([node]) for node in gui.graph.nodes]
+    MST = set()
 
     while len(forest) > 1:
         for i, component in enumerate(forest):
@@ -66,21 +66,12 @@ def boruvkas(gui):
                 if not cheapest_edges[edge.second_node.mark] or edge < cheapest_edges[edge.second_node.mark]:
                     cheapest_edges[edge.second_node.mark] = edge
 
-        involved_edges.update(cheapest_edges)
-
         new_forest = []
-        for edge in cheapest_edges:
-            new_component = []
-            for component in forest:
-                if edge.first_node in component or edge.second_node in component:
-                    new_component.extend(component)
-
-            for component in new_forest:
-                if edge.first_node in component or edge.second_node in component:
-                    component.extend(new_component)
-                    break
-            else:
-                new_forest.append(new_component)
+        for e in set(filter(None, cheapest_edges)):
+            MST.add(e)
+            C = forest[e.first_node.mark]
+            C.update(forest[e.second_node.mark])
+            new_forest.append(C)
 
         # Color elements
         gui.color_entire_graph()
@@ -88,7 +79,7 @@ def boruvkas(gui):
         for node in gui.graph.nodes:
             node.color_element(component_colors[node.mark])
         for e in gui.graph.edges:
-            if e.first_node.mark == e.second_node.mark and e in involved_edges:
+            if e.first_node.mark == e.second_node.mark and e in MST:
                 e.color_element(component_colors[e.first_node.mark])
         gui.wait(7)
 
@@ -96,9 +87,9 @@ def boruvkas(gui):
 
     chosen_color = next(iter(gui.graph.nodes)).color
     gui.color_array(gui.graph.nodes, chosen_color)
-    gui.color_array([e for e in gui.graph.edges if e in involved_edges], chosen_color)
+    gui.color_array([e for e in gui.graph.edges if e in MST], chosen_color)
     gui.wait(5)
-    return involved_edges
+    return MST
 
 
 def prims(gui):
@@ -106,32 +97,32 @@ def prims(gui):
         print("Spanning tree doesn't exist")
         return None
 
-    visited, min_tree = set(), set()
+    visited, MST = set(), set()
     first_node = next(iter(gui.graph.nodes))
     visited.add(first_node)
-    next_edges = [e for e in gui.graph.get_edges_from_node(first_node)]
-    heapify(next_edges)
+    all_edges = list(gui.graph.get_edges_from_node(first_node))
+    heapify(all_edges)
 
     while len(visited) < gui.graph.order:
         gui.color_entire_graph()
-        gui.color_array([e for e in gui.graph.edges if e in min_tree], Color.RED)
+        gui.color_array([e for e in gui.graph.edges if e in MST], Color.RED)
         gui.color_array([n for n in gui.graph.nodes if n in visited], Color.RED)
         gui.wait(1)
 
         while True:
-            e = heappop(next_edges)
-            if e not in min_tree and (e.first_node not in visited or e.second_node not in visited): break
-        min_tree.add(e)
+            e = heappop(all_edges)
+            if e.first_node not in visited or e.second_node not in visited: break
+        MST.add(e)
         visited.add(e.second_node)
-        for edge in gui.graph.get_edges_from_node(e.second_node):
-            heappush(next_edges, edge)
+        for new_edge in gui.graph.get_edges_from_node(e.second_node):
+            heappush(all_edges, new_edge)
 
     gui.color_entire_graph()
-    gui.color_array([e for e in gui.graph.edges if e in min_tree], Color.RED)
+    gui.color_array([e for e in gui.graph.edges if e in MST], Color.RED)
     gui.color_array([n for n in gui.graph.nodes if n in visited], Color.RED)
     gui.wait(5)
 
-    return min_tree
+    return MST
 
 
 def color_graph(gui):

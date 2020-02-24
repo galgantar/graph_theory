@@ -1,33 +1,6 @@
 import pygame
 from random import randint
 from math import sqrt
-from itertools import count
-
-
-class Color:
-    NONE = None
-    BLACK = (0, 0, 0)
-    WHITE = (255, 255, 255)
-    RED = (255, 0, 0)
-    GREEN = (0, 255, 0)
-    BLUE = (0, 0, 255)
-    YELLOW = (255, 255, 0)
-
-    available_colors = [RED, GREEN, BLUE, YELLOW]
-
-    @staticmethod
-    def infinite_generator():
-        for i in count():
-            yield Color.available_colors[i] if i < len(Color.available_colors) else Color.generate_random_color()
-
-    @staticmethod
-    def finite_generator(limit):
-        for i in range(limit):
-            yield Color.available_colors[i] if i < len(Color.available_colors) else Color.generate_random_color()
-
-    @staticmethod
-    def generate_random_color():
-        return randint(30, 255), randint(30, 255), randint(30, 255)
 
 
 class Edge:
@@ -125,7 +98,6 @@ class Graph:
     def __init__(self):
         self.edges = set()
         self.nodes = set()
-        self.node_count = 0
 
     def __getitem__(self, item):
         for node in self.nodes:
@@ -152,20 +124,15 @@ class Graph:
         self.nodes.add(Node(len(self.nodes), position))
 
     def connect_nodes(self, node1, node2, weight=0):
-        """self[node1].add_edge(Edge(self[node1], self[node2], weight))
-        self[node2].add_edge(Edge(self[node2], self[node1], weight))"""
-
-        if Edge(self[min(node1, node2)], self[max(node1, node2)], weight) not in self.edges:
-            self.edges.add(Edge(self[min(node1, node2)], self[max(node1, node2)], weight))
+        if Edge(self[node1], self[node2], weight) not in self.edges:
+            self.edges.add(Edge(self[node1], self[node2], weight))
             return True
 
         return False
 
     def remove_node(self, node):
         self.nodes.remove(node)
-        self.edges = set([e for e in self.edges if not e.contains(node)])
-        for n in self.nodes:
-            n.remove_edge_with_node(node)
+        self.edges = set((e for e in self.edges if not e.contains(node)))
 
     def are_connected(self, node1, node2):
         for e in self.get_edges_from_node(node1):
@@ -174,14 +141,10 @@ class Graph:
         return False
 
     def get_edge(self, node1, node2):
-        if node1 == node2:
-            return None
-        if node1 > node2:
-            node1, node2 = node2, node1
         for e in self.edges:
-            if e.first_node == node1 and e.second_node == node2:
+            if e.contains(node1) and e.contains(node2):
                 return e
-        raise KeyError(f"Edge between {node1} and {node2} does not exist")
+        return None
 
     def cost_of_edge(self, node1, node2):
         e = self.get_edge(node1, node2)
@@ -225,7 +188,7 @@ class Graph:
         return True
 
     def random_fill(self, nr_of_nodes, nr_of_connections, width_range, height_range):
-        if nr_of_connections > nr_of_nodes**2:
+        if nr_of_connections > nr_of_nodes*(nr_of_nodes-1)//2:
             raise ValueError("Number of connections if too big")
 
         self.nodes.clear()
