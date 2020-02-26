@@ -1,5 +1,7 @@
 /.idea
 /__pycache__
+/report
+/saved_graphs/custom*
 *.log
 *.aux
 *.gz
