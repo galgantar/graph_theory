@@ -12,7 +12,6 @@ from color import Color
 import algorithms
 
 
-
 class CustomDropdown(pygame_gui.elements.ui_drop_down_menu.UIDropDownMenu):
     def __init__(self, screen_width, screen_height, rect, options, starting_option, saved_manager):
         self.saved_manager = saved_manager
@@ -58,6 +57,7 @@ class Gui:
 
     def initialize_gui_elements(self):
         C = namedtuple('C', ["a", "b", "c"])  # representing color with pygame_gui interface
+        
         self.gui_manager = pygame_gui.UIManager(window_resolution=(self.screen_width, self.screen_height))
         self.visualize_button = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect((self.screen_width - 275, 230), (100, 50)), text="Visualize!",
