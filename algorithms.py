@@ -125,56 +125,35 @@ def prims(gui):
     return MST
 
 
-def color_graph(gui):
-    color_gen = Color.infinite_generator()
-    first_color = next(color_gen)
-    used_colors = [first_color]
-
-    for i, node in enumerate(gui.graph.nodes):
-        if i == 0:
-            node.color = first_color
-        else:
-            node.color = Color.NONE
-
-    for node in gui.graph.nodes:
-        if node.color == Color.NONE:
-            taken_colors = [e.second_node.color for e in gui.graph.get_edges_from_node(node) if e.second_node.color != Color.NONE]
-            for color in used_colors:
-                if color not in taken_colors:
-                    node.color = color
-                    break
-            else:
-                node.color = next(color_gen)
-                used_colors.append(node.color)
-
-    gui.wait(5)
-    return len(used_colors)
-
-
 def TSP(gui, start, current, remaining, path=None, master=True):
     if path is None: path = set()
-    if not gui.graph.totally_connected:
-        print("Can't calculate TSP - edges missing")
-        return None
+    remaining.remove(current)
 
     if not remaining:
-        last_edge = gui.graph.get_edge(start, current)
-        if last_edge: path.add(last_edge)
+        final_edge = gui.graph.get_edge(start, current)
+        if final_edge:
+            path.add(final_edge)
+            weight = final_edge.weight
+        else:
+            weight = float("inf")
         gui.color_entire_graph()
         gui.color_array(gui.graph.nodes, Color.RED)
         gui.color_array([e for e in gui.graph.edges if e in path], Color.RED)
-        gui.wait(0.3)
-        return gui.graph.cost_of_edge(start, current), set([gui.graph.get_edge(start, current)])
+        gui.wait(0.5)
+
+        return weight, path
 
     minimal_cost = float("inf")
     final_path = None
 
-    for node in remaining - set([current]):
+    for node in remaining:
         e = gui.graph.get_edge(current, node)
-        cost, current_path = TSP(gui, start, node, remaining - set([node]), path.union(set([e])), False)
+        if e is None:
+            continue
+        cost, current_path = TSP(gui, start, node, remaining.copy(), path.union({e}), False)
         if cost + e.weight < minimal_cost:
             minimal_cost = cost + e.weight
-            final_path = current_path.union(set([e]))
+            final_path = current_path.union({e})
 
     if master:
         gui.color_entire_graph()
@@ -183,3 +162,29 @@ def TSP(gui, start, current, remaining, path=None, master=True):
         gui.wait(5)
 
     return minimal_cost, final_path
+
+
+def color_with_min(gui):
+    k = 1
+    while not color_graph(gui, [c for c in Color.finite_generator(k)], gui.graph.nodes):
+        gui.color_array(gui.graph.nodes, Color.NONE)
+        k += 1
+    return k
+
+
+def color_graph(gui, colors, nodes_to_color, master=True):
+    if not nodes_to_color:
+        return True
+
+    for node in nodes_to_color:
+        for c in colors:
+            for e in gui.graph.get_edges_from_node(node):
+                if e.second_node.color == c:
+                    break
+            else:
+                node.color = c
+                if color_graph(gui, colors, nodes_to_color - {node}, False):
+                    if master:
+                        gui.wait(3)
+                    return True
+    return False

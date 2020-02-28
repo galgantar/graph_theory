@@ -120,6 +120,12 @@ class Graph:
             elif e.second_node == node:
                 yield Edge(node, e.first_node, e.weight)
 
+    def get_edge(self, node1, node2):
+        for e in self.edges:
+            if e.contains(node1) and e.contains(node2):
+                return e
+        return None
+
     def add_node(self, position):
         self.nodes.add(Node(len(self.nodes), position))
 
@@ -140,18 +146,16 @@ class Graph:
                 return True
         return False
 
-    def get_edge(self, node1, node2):
-        for e in self.edges:
-            if e.contains(node1) and e.contains(node2):
-                return e
-        return None
-
     def cost_of_edge(self, node1, node2):
         e = self.get_edge(node1, node2)
         if not e:
             return 0
         else:
             return e.weight
+
+    @property
+    def empty(self):
+        return not bool(self.nodes)
 
     @property
     def order(self):

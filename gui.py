@@ -258,6 +258,7 @@ class Gui:
             self.loadable_graphs = new_loadable_graphs
 
     def visualize_algorithm(self, algorithm):
+        if self.graph.empty: return
         self.currently_visualizing = True
         it = iter(self.graph.nodes)
 
@@ -280,11 +281,12 @@ class Gui:
             print(algorithms.prims(self))
 
         elif algorithm == "Color":
-            algorithms.color_graph(self)
+            self.color_array(self.graph.nodes, Color.NONE)
+            algorithms.color_with_min(self)
 
         elif algorithm == "TSP":
             start = next(it)
-            print(algorithms.TSP(self, start, start, self.graph.nodes))
+            algorithms.TSP(self, start, start, self.graph.nodes.copy())
 
         self.color_entire_graph()
         self.currently_visualizing = False
