@@ -88,12 +88,19 @@ class Gui:
         self.weight_input = pygame_gui.elements.ui_text_entry_line.UITextEntryLine(
             relative_rect=pygame.Rect((self.screen_width - 275, 370), (100, 50)), manager=self.gui_manager)
 
-        self.test_label = pygame_gui.elements.ui_text_box.UITextBox(
+        self.desc_label = pygame_gui.elements.ui_text_box.UITextBox(
             relative_rect=pygame.Rect((self.screen_width - 275, 10), (250, 130)), html_text=
             """<b>Vizualizator grafov</b> by Gal Gantar\
                 kontrole: TAB; ENTER; MIDDLE, LEFT, RIGTH MOUSE\
             """,
             manager=self.gui_manager)
+
+        self.prev_nodes, self.prev_edges = None, None
+
+        self.node_label = pygame_gui.elements.ui_label.UILabel(
+            relative_rect=pygame.Rect((self.screen_width - 280, 470), (132, 20)), text="VOZLIŠČA:", manager=self.gui_manager)
+        self.edge_label = pygame_gui.elements.ui_label.UILabel(
+            relative_rect=pygame.Rect((self.screen_width - 280, 500), (132, 20)), text="POVEZAVE:", manager=self.gui_manager)
 
         self.label1 = pygame_gui.elements.ui_label.UILabel(
             relative_rect=pygame.Rect((self.screen_width - 275, 180), (100, 20)), text="ALGORITMI:", manager=self.gui_manager)
@@ -101,7 +108,6 @@ class Gui:
             relative_rect=pygame.Rect((self.screen_width - 120, 180), (100, 20)), text="UVOZI GRAF:", manager=self.gui_manager)
         self.label3 = pygame_gui.elements.ui_label.UILabel(
             relative_rect=pygame.Rect((self.screen_width - 275, 350), (100, 20)), text="NOVA UTEŽ:", manager=self.gui_manager)
-
         self.label4 = pygame_gui.elements.ui_label.UILabel(
             relative_rect=pygame.Rect((self.screen_width - 130, 350), (130, 20)), text="NAKLJUČNI GRAF:", manager=self.gui_manager)
 
@@ -109,10 +115,14 @@ class Gui:
         self.label2.bg_colour, self.label2.text_colour = C(100, 100, 100), C(255, 255, 255)
         self.label3.bg_colour, self.label3.text_colour = C(100, 100, 100), C(255, 255, 255)
         self.label4.bg_colour, self.label4.text_colour = C(100, 100, 100), C(255, 255, 255)
+        self.node_label.bg_colour, self.node_label.text_colour = C(100, 100, 100), C(255, 255, 255)
+        self.edge_label.bg_colour, self.edge_label.text_colour = C(100, 100, 100), C(255, 255, 255)
         self.label1.rebuild()
         self.label2.rebuild()
         self.label3.rebuild()
         self.label4.rebuild()
+        self.node_label.rebuild()
+        self.edge_label.rebuild()
 
     def run(self):
         while True:
@@ -124,6 +134,7 @@ class Gui:
         self.handle_mouse()
         self.handle_keys()
         self.update_menus()
+        self.update_graph_data()
         self.gui_manager.update(delta_time)
 
         if not self.currently_visualizing:
@@ -257,6 +268,20 @@ class Gui:
             self.load_graphs_dropdown.rebuild(new_loadable_graphs)
             self.loadable_graphs = new_loadable_graphs
 
+    def update_graph_data(self):
+        nodes = self.graph.order
+        edges = self.graph.size
+
+        if self.prev_nodes != nodes:
+            self.node_label.text = f"VOZLIŠČA: {nodes}"
+            self.node_label.rebuild()
+            self.prev_nodes = nodes
+
+        if self.prev_edges != edges:
+            self.edge_label.text = f"POVEZAVE: {edges}"
+            self.edge_label.rebuild()
+            self.prev_edges = edges
+
     def visualize_algorithm(self, algorithm):
         if self.graph.empty: return
         self.currently_visualizing = True
@@ -264,7 +289,8 @@ class Gui:
 
         if algorithm == "Dfs":
             if self.selected_nodes:
-                algorithms.dfs(self, self.selected_nodes[0])
+                algorithms.dfs(False, self, self.selected_nodes[0])
+
             else:
                 algorithms.dfs(self, next(it))
 
@@ -275,10 +301,10 @@ class Gui:
                 algorithms.bfs(self, next(it))
 
         elif algorithm == "Boruvkas":
-            print(algorithms.boruvkas(self))
+            algorithms.boruvkas(self)
 
         elif algorithm == "Prims":
-            print(algorithms.prims(self))
+            algorithms.prims(self)
 
         elif algorithm == "Color":
             self.color_array(self.graph.nodes, Color.NONE)
@@ -286,7 +312,11 @@ class Gui:
 
         elif algorithm == "TSP":
             start = next(it)
+            #try:
             algorithms.TSP(self, start, start, self.graph.nodes.copy())
+
+            #except TypeError:
+                #print("Hamiltonian cycle doesn't exist")
 
         self.color_entire_graph()
         self.currently_visualizing = False

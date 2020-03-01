@@ -9,18 +9,21 @@ def one_after_another(element1, element2, array):
     return abs(array.index(element1) - array.index(element2)) == 1
 
 
-def dfs(gui, current, visited=None):
-    if visited is None: visited=[]
-    visited.append(current.value)
+def dfs(gui, current, visited=None, visited_edges=None, iterations=0):
+    if visited is None: visited=set()
+    if visited_edges is None: visited_edges=set()
+    visited.add(current)
 
     gui.color_entire_graph()
-    gui.color_array([e for e in gui.graph.edges if one_after_another(e.first_node.value, e.second_node.value, visited)], Color.RED)
+    gui.color_array([e for e in gui.graph.edges if e in visited_edges], Color.RED)
     gui.color_array([n for n in gui.graph.nodes if n.value in visited], Color.RED)
     gui.wait(1)
 
     for e in gui.graph.get_edges_from_node(current):
-        if e.second_node.value not in visited:
-            dfs(gui, e.second_node, visited)
+        iterations += 1
+        if e.second_node not in visited:
+            visited_edges.add(e)
+            dfs(gui, e.second_node, visited, visited_edges)
 
 
 def bfs(gui, start_node):
@@ -139,7 +142,7 @@ def TSP(gui, start, current, remaining, path=None, master=True):
         gui.color_entire_graph()
         gui.color_array(gui.graph.nodes, Color.RED)
         gui.color_array([e for e in gui.graph.edges if e in path], Color.RED)
-        gui.wait(0.5)
+        gui.wait(0.8)
 
         return weight, path
 
@@ -155,10 +158,10 @@ def TSP(gui, start, current, remaining, path=None, master=True):
             minimal_cost = cost + e.weight
             final_path = current_path.union({e})
 
-    if master:
+    if master and final_path:
         gui.color_entire_graph()
-        gui.color_array(gui.graph.nodes, Color.RED)
-        gui.color_array([e for e in gui.graph.edges if e in final_path], Color.RED)
+        gui.color_array(gui.graph.nodes, Color.GREEN)
+        gui.color_array([e for e in gui.graph.edges if e in final_path], Color.GREEN)
         gui.wait(5)
 
     return minimal_cost, final_path
