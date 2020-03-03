@@ -312,11 +312,7 @@ class Gui:
 
         elif algorithm == "TSP":
             start = next(it)
-            #try:
             algorithms.TSP(self, start, start, self.graph.nodes.copy())
-
-            #except TypeError:
-                #print("Hamiltonian cycle doesn't exist")
 
         self.color_entire_graph()
         self.currently_visualizing = False
@@ -340,10 +336,7 @@ class Gui:
 
     def save_custom_graph(self):
         custom_graphs = len([name for name in self.list_loadable_graphs() if "custom_" in name])
-        self.save_graph_to_a_file(f"custom_{custom_graphs+1}.pkl")
-
-    def save_graph_to_a_file(self, filename):
-        with open(f"saved_graphs/{filename}", "wb") as file:
+        with open(f"saved_graphs/custom_{custom_graphs+1}.pkl", "wb") as file:
             pickle.dump(self.graph, file)
 
     def load_graph_from_a_file(self, filename):

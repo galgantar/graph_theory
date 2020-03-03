@@ -133,7 +133,6 @@ class Graph:
         if Edge(self[node1], self[node2], weight) not in self.edges:
             self.edges.add(Edge(self[node1], self[node2], weight))
             return True
-
         return False
 
     def remove_node(self, node):
@@ -145,13 +144,6 @@ class Graph:
             if e.second_node == node2:
                 return True
         return False
-
-    def cost_of_edge(self, node1, node2):
-        e = self.get_edge(node1, node2)
-        if not e:
-            return 0
-        else:
-            return e.weight
 
     @property
     def empty(self):
@@ -182,12 +174,10 @@ class Graph:
         return len(checked_nodes) == self.order
 
     @property
-    def totally_connected(self):
+    def complete(self):
         for node1 in self.nodes:
             for node2 in self.nodes:
                 if node1 is not node2 and not self.are_connected(node1, node2):
-                    print(node1, node2, "not connected")
-                    print(self)
                     return False
         return True
 
