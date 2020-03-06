@@ -6,6 +6,7 @@ from math import sqrt
 import pickle
 import os
 from collections import namedtuple
+import warnings
 
 from graph import Graph
 from color import Color
@@ -46,27 +47,28 @@ class Gui:
 
         pygame.init()
         pygame.font.init()
-        pygame.display.set_caption("Graph theory")
+        pygame.display.set_caption("Teorija grafov")
 
         self.window = pygame.display.set_mode(size=(screen_width, screen_height))
 
         self.clock = pygame.time.Clock()
-        self.font = pygame.font.SysFont(name="Gill Sans Nova", size=25)
+        self.font = pygame.font.Font("fonts/roboto.ttf", 18)
 
         self.initialize_gui_elements()
 
     def initialize_gui_elements(self):
         C = namedtuple('C', ["a", "b", "c"])  # representing color with pygame_gui interface
-        
+
         self.gui_manager = pygame_gui.UIManager(window_resolution=(self.screen_width, self.screen_height))
+
         self.visualize_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((self.screen_width - 275, 230), (100, 50)), text="Visualize!",
+            relative_rect=pygame.Rect((self.screen_width - 275, 230), (110, 50)), text="Vizualiziraj",
             manager=self.gui_manager)
 
         self.available_algorithms = ["Dfs", "Bfs", "Boruvkas", "Prims", "Color", "TSP"]
         self.algorithms_dropdown = pygame_gui.elements.ui_drop_down_menu.UIDropDownMenu(
             options_list=self.available_algorithms, starting_option=self.available_algorithms[0],
-            relative_rect=pygame.Rect((self.screen_width - 275, 200), (100, 30)), manager=self.gui_manager)
+            relative_rect=pygame.Rect((self.screen_width - 275, 200), (110, 30)), manager=self.gui_manager)
 
         self.loadable_graphs = self.list_loadable_graphs()
         starting_option = self.loadable_graphs[0] if self.loadable_graphs else " "
@@ -82,18 +84,20 @@ class Gui:
             manager=self.gui_manager)
 
         self.reset_graph_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((self.screen_width - 120, 370), (100, 50)), text="Generiraj!",
+            relative_rect=pygame.Rect((self.screen_width - 120, 370), (100, 50)), text="Generiraj",
             manager=self.gui_manager)
 
         self.weight_input = pygame_gui.elements.ui_text_entry_line.UITextEntryLine(
             relative_rect=pygame.Rect((self.screen_width - 275, 370), (100, 50)), manager=self.gui_manager)
 
-        self.desc_label = pygame_gui.elements.ui_text_box.UITextBox(
-            relative_rect=pygame.Rect((self.screen_width - 275, 10), (250, 130)), html_text=
-            """<b>Vizualizator grafov</b> by Gal Gantar\
-                kontrole: TAB; ENTER; MIDDLE, LEFT, RIGTH MOUSE\
-            """,
-            manager=self.gui_manager)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            self.desc_label = pygame_gui.elements.ui_text_box.UITextBox(
+                relative_rect=pygame.Rect((self.screen_width - 275, 10), (250, 130)), html_text=
+                """<b>Vizualizator grafov</b> by Gal Gantar\
+                    kontrole: TAB; ENTER; MIDDLE, LEFT, RIGTH MOUSE\
+                """,
+                manager=self.gui_manager)
 
         self.prev_nodes, self.prev_edges = None, None
 
@@ -164,7 +168,8 @@ class Gui:
                         print("Cannot reset graph")
 
                 elif event.ui_element == self.save_graph_button:
-                    self.save_custom_graph()
+                    if not self.graph.empty:
+                        self.save_custom_graph()
 
                 elif event.ui_element == self.load_graph_button:
                     try:
