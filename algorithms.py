@@ -3,6 +3,8 @@ from color import Color
 
 
 def one_after_another(element1, element2, array):
+    """ preveri, ali elementa v sezmamu nastopata eden za drugim (za nameme vizualizacije)"""
+
     if element1 not in array or element2 not in array:
         return False
 
@@ -10,6 +12,8 @@ def one_after_another(element1, element2, array):
 
 
 def dfs(gui, current, visited=None, visited_edges=None, iterations=0):
+    """ preiskovaje v globino"""
+
     if visited is None: visited=set()
     if visited_edges is None: visited_edges=set()
     visited.add(current)
@@ -27,6 +31,8 @@ def dfs(gui, current, visited=None, visited_edges=None, iterations=0):
 
 
 def bfs(gui, start_node):
+    """ preiskovanje v širino """
+
     checked_pairs = [(None, start_node)]
     next_to_check = [start_node]
 
@@ -48,8 +54,9 @@ def bfs(gui, start_node):
 
 
 def boruvkas(gui):
+    """ boruvkov algoritem """
+
     if not gui.graph.weakly_connected:
-        print("Spanning tree doesn't exist")
         return None
 
     forest = [set([node]) for node in gui.graph.nodes]
@@ -96,8 +103,9 @@ def boruvkas(gui):
 
 
 def prims(gui):
+    """ primov algoritem """
+
     if not gui.graph.weakly_connected:
-        print("Spanning tree doesn't exist")
         return None
 
     visited, MST = set(), set()
@@ -129,6 +137,8 @@ def prims(gui):
 
 
 def TSP(gui, start, current, remaining, path=None, master=True):
+    """ problem potujočega potnika """
+
     if path is None: path = set()
     remaining.remove(current)
 
@@ -168,6 +178,7 @@ def TSP(gui, start, current, remaining, path=None, master=True):
 
 
 def color_with_min(gui):
+    """ funkcija povečuje število barv v seznamu, dokler graf ni obarvljiv """
     k = 1
     while not color_graph(gui, [c for c in Color.finite_generator(k)], gui.graph.nodes):
         gui.color_array(gui.graph.nodes, Color.NONE)
@@ -176,6 +187,7 @@ def color_with_min(gui):
 
 
 def color_graph(gui, colors, nodes_to_color, master=True):
+    """ preveri, ali je graf obarvljiv z barvami, ki so v sezmu colors """
     if not nodes_to_color:
         return True
 

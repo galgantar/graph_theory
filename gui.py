@@ -14,6 +14,11 @@ import algorithms
 
 
 class CustomDropdown(pygame_gui.elements.ui_drop_down_menu.UIDropDownMenu):
+    """
+    dedujoč razred iz knjižnice pygame_gui, ki podpira ponovno izgradnjo,
+    za namen osvežitve podatkov, ki jih prikazuje
+    """
+
     def __init__(self, screen_width, screen_height, rect, options, starting_option, saved_manager):
         self.saved_manager = saved_manager
         self.screen_width = screen_width
@@ -57,6 +62,8 @@ class Gui:
         self.initialize_gui_elements()
 
     def initialize_gui_elements(self):
+        """ vse objekte grafičnega vmesnika (gumbe, menije, obrazec ...) shrani kot atribute """
+
         C = namedtuple('C', ["a", "b", "c"])  # representing color with pygame_gui interface
 
         self.gui_manager = pygame_gui.UIManager(window_resolution=(self.screen_width, self.screen_height))
@@ -129,10 +136,14 @@ class Gui:
         self.edge_label.rebuild()
 
     def run(self):
+        """ vmesnik se osvežuje, dokler ga funkcija Gui.check_events() ne prekine"""
+
         while True:
             self.refresh()
 
     def refresh(self):
+        """ osvežuje vmesnik, se pokliče 30-krat na sekundo (za to poskrbi objekt clock) """
+
         self.check_events()
         delta_time = self.clock.tick(30) / 1000
         self.handle_mouse()
@@ -149,6 +160,8 @@ class Gui:
         self.draw_items()
 
     def check_events(self):
+        """ skrbi za pravilno delovanje dogodkov """
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -159,13 +172,13 @@ class Gui:
                     if not self.currently_visualizing:
                         self.visualize_algorithm(self.algorithms_dropdown.selected_option)
                     else:
-                        print("Already visualizing")
+                        pass  # Already visualising another algorithm
 
                 elif event.ui_element == self.reset_graph_button:
                     if not self.currently_visualizing:
                         self.graph.random_fill(self.nr_of_nodes, self.nr_of_edges, (30, self.screen_width - 400), (30, self.screen_height - 30))
                     else:
-                        print("Cannot reset graph")
+                        pass  # Already visualising another algorithm
 
                 elif event.ui_element == self.save_graph_button:
                     if not self.graph.empty:
@@ -181,6 +194,8 @@ class Gui:
             self.gui_manager.process_events(event)
 
     def handle_mouse(self):
+        """ dogodki, ki jih sproži miška """
+
         left, middle, right = pygame.mouse.get_pressed()
         mouse_pos = pygame.mouse.get_pos()
         if right and time() - self.prev_click_left_mouse > 0.5:
@@ -192,7 +207,8 @@ class Gui:
                         self.selected_nodes.append(node)
 
                     else:
-                        self.selected_nodes.remove(node)
+                        if not self.currently_visualizing:
+                            self.selected_nodes.remove(node)
 
                     break
 
@@ -228,6 +244,8 @@ class Gui:
                     break
 
     def handle_keys(self):
+        """ dogodki, ki jih sproži tipkovnica """
+
         keys = pygame.key.get_pressed()
         if keys[pygame.K_TAB]:
             mouse_pos = pygame.mouse.get_pos()
@@ -248,6 +266,8 @@ class Gui:
                 pass
 
     def draw_items(self):
+        """ nariše vse potrebne objekte grafa in grafičnega vmesnika na zaslon """
+
         self.window.fill((255, 255, 255))
         pygame.draw.rect(self.window, (100, 100, 100), (self.screen_width-300, 0, 300, self.screen_height))
         self.gui_manager.draw_ui(self.window)
@@ -261,6 +281,11 @@ class Gui:
         pygame.display.update()
 
     def wait(self, seconds):
+        """
+        metodo kličejo algoritmi, zagotavlja, da vmesnik tudi med vizualizacijo
+        algoritma delujejo funkcije grafičnega vmesnika (premikanje vozlišč)
+        """
+
         t = 0
         while t < seconds:
             t1 = time()
@@ -268,12 +293,16 @@ class Gui:
             t += time() - t1
 
     def update_menus(self):
+        """ ponovno zgradi meni z grafi za uvoz, če najde nove elemnte v njem """
+
         new_loadable_graphs = self.list_loadable_graphs()
         if self.loadable_graphs != new_loadable_graphs:
             self.load_graphs_dropdown.rebuild(new_loadable_graphs)
             self.loadable_graphs = new_loadable_graphs
 
     def update_graph_data(self):
+        """ posodobi podatke o grafu, ki se prikazujejo """
+
         nodes = self.graph.order
         edges = self.graph.size
 
@@ -288,6 +317,8 @@ class Gui:
             self.prev_edges = edges
 
     def visualize_algorithm(self, algorithm):
+        """ kliče eno od funkcij, definiranih v algorithms.py """
+
         if self.graph.empty: return
         self.currently_visualizing = True
         it = iter(self.graph.nodes)
@@ -323,6 +354,8 @@ class Gui:
         self.currently_visualizing = False
 
     def color_entire_graph(self, color=Color.BLACK):
+        """ pobarva cel graf z črno barvo """
+
         self.color_array(self.graph.nodes, color)
         self.color_array(self.graph.edges, color)
 
@@ -340,10 +373,14 @@ class Gui:
         return list(sorted(f.strip(".pkl") for f in os.listdir("saved_graphs")))
 
     def save_custom_graph(self):
+        """ shrani trenutni graf v datoteko, v mapi /saved_graphs """
+
         custom_graphs = len([name for name in self.list_loadable_graphs() if "custom_" in name])
         with open(f"saved_graphs/custom_{custom_graphs+1}.pkl", "wb") as file:
             pickle.dump(self.graph, file)
 
     def load_graph_from_a_file(self, filename):
+        """ naloži graf, v parametru filename iz datoteke """
+
         with open(f"saved_graphs/{filename}", "rb") as file:
             self.graph = pickle.load(file)

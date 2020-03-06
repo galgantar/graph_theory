@@ -30,9 +30,13 @@ class Edge:
         return hash(first + second)
 
     def contains(self, item):
+        """ preveri, ali povezava vsebuje vozlišče """
+
         return self.first_node == item or self.second_node == item
 
     def calculate_text_pos(self):
+        """ izračuna položaj oznake z utežjo, tako da se ne prekriva z povezavo, katero označuje """
+
         move_constant = 20
         vector = (self.first_node.position[0]-self.second_node.position[0], self.first_node.position[1]-self.second_node.position[1])
         vec_len = sqrt(vector[0]**2+vector[1]**2) + 0.001
@@ -44,6 +48,8 @@ class Edge:
         self.text_pos = x, y
 
     def draw(self, window, font):
+        """ nariše povezavo na okno, podano kot parameter """
+
         pygame.draw.line(window, self.color, self.first_node.position, self.second_node.position, 2)
 
         self.calculate_text_pos()
@@ -51,6 +57,8 @@ class Edge:
         window.blit(font_surface, (self.text_pos[0]-font_surface.get_width()//2, self.text_pos[1]-font_surface.get_height()//2))
 
     def color_element(self, color):
+        """ pobarva povezavo """
+
         self.color = color
 
 
@@ -82,15 +90,23 @@ class Node:
         return hash(self.value)
 
     def make_mark(self, mark):
+        """ označi vozlišče """
+
         self.mark = mark
 
     def add_edge(self, edge):
+        """ dodaj povezavo grafu """
+
         self.edges.add(edge)
 
     def color_element(self, color):
+        """ pobarvaj vozlišče """
+
         self.color = color
 
     def draw(self, window):
+        """ nariši vozlišče na okno, podano kot parameter """
+
         pygame.draw.circle(window, self.color, self.position, 7)
 
 
@@ -114,6 +130,8 @@ class Graph:
         return string
 
     def get_edges_from_node(self, node):
+        """ generator čez vse povezave, ki izhajajo iz vozlišča node, podanega kot parameter """
+
         for e in self.edges:
             if e.first_node == node:
                 yield Edge(node, e.second_node, e.weight)
@@ -121,29 +139,31 @@ class Graph:
                 yield Edge(node, e.first_node, e.weight)
 
     def get_edge(self, node1, node2):
+        """ vrni kazalec na povezavo, ki poteka med vozliščema, podanima kot parameter """
+
         for e in self.edges:
             if e.contains(node1) and e.contains(node2):
                 return e
         return None
 
     def add_node(self, position):
+        """ doda povezavo grafu """
+
         self.nodes.add(Node(len(self.nodes), position))
 
     def connect_nodes(self, node1, node2, weight=0):
+        """ poveži podana vozlišča z utežjo """
+
         if Edge(self[node1], self[node2], weight) not in self.edges:
             self.edges.add(Edge(self[node1], self[node2], weight))
             return True
         return False
 
     def remove_node(self, node):
+        """ odstrani vozlišče """
+
         self.nodes.remove(node)
         self.edges = set((e for e in self.edges if not e.contains(node)))
-
-    def are_connected(self, node1, node2):
-        for e in self.get_edges_from_node(node1):
-            if e.second_node == node2:
-                return True
-        return False
 
     @property
     def empty(self):
@@ -182,6 +202,8 @@ class Graph:
         return True
 
     def random_fill(self, nr_of_nodes, nr_of_connections, width_range, height_range):
+        """ napolni graf z vozlišči in povezavami z naključnimi utežmi """
+
         if nr_of_connections > nr_of_nodes*(nr_of_nodes-1)//2:
             raise ValueError("Number of connections if too big")
 
