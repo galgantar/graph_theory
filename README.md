@@ -1,5 +1,5 @@
 # Teorija grafov
-vse potrebne knjižnice so v datoteki requirements.txt
+vse potrebne knjižnice so v datoteki `requirements.txt`
 
 program zaženemo z:
 ```
