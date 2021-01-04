@@ -1,0 +1,111 @@
+\documentclass[11pt]{article}
+
+\usepackage[utf8]{inputenc} % Required for inputting international characters
+\usepackage[T1]{fontenc} % Output font encoding for international characters
+\usepackage{mathpazo} % Palatino font
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{csquotes}
+\usepackage[margin=3cm]{geometry}
+
+% Header and footer
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LE,RO]{\leftmark}
+\fancyhead[RE,LO]{Teorija grafov}
+\fancyfoot[CE,CO]{\thepage}
+
+% clickable links, tables of content
+\usepackage[bookmarks, colorlinks=true, linkcolor=black, anchorcolor=black,
+citecolor=black, filecolor=black, menucolor=black, runcolor=black,
+urlcolor=black, pdfencoding=unicode]{hyperref}
+
+% listings
+\usepackage{listings}
+\usepackage{xcolor}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{1, 1, 1}
+\definecolor{deepblue}{rgb}{0,0,0.9}
+\definecolor{grey}{rgb}{0.2, 0.2, 0.2}
+\definecolor{green}{rgb}{0, 0.5, 0}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{deepblue},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{green},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,      
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    aboveskip=20pt,belowskip=20pt
+}
+
+\lstset{style=mystyle}
+
+
+\graphicspath{ {./images/} }
+\captionsetup[figure]{name={Slika}}
+
+% Slovenian labels and names
+\renewcommand{\contentsname}{Vsebina}
+\renewcommand{\lstlistlistingname}{Kazalo izsekov}
+\renewcommand{\lstlistingname}{Izsek}
+\renewcommand{\listfigurename}{Kazalo slik}
+
+
+\begin{document}
+
+\begin{titlepage}
+	\newcommand{\HRule}{\rule{\linewidth}{0.5mm}} % Defines a new command for horizontal lines, change thickness here
+	
+	\center % Centre everything on the page
+	
+	\null\vspace{4cm} % vertical gap
+	
+	%\textsc{\LARGE Gimnazija Vič}\\[1.5cm] % Main heading such as the name of your university/college
+	
+	\textsc{\Large Raziskovalna naloga pri predmetu informatika}\\[0.5cm] % Major heading such as course name
+	
+	\HRule\\[0.4cm]
+	
+	{\huge\bfseries Teorija grafov}\\[0.4cm] % Title of your document
+	
+	\HRule\\[1.5cm]
+	
+	\begin{minipage}{0.4\textwidth}
+		\begin{flushleft}
+			\large
+			%\textit{Avtor}\\
+			%Gal \textsc{Gantar}
+		\end{flushleft}
+	\end{minipage}
+	~
+	\begin{minipage}{0.4\textwidth}
+		\begin{flushright}
+			\large
+			%\textit{Mentor}\\
+			%Klemen \textsc{Bajec}
+		\end{flushright}
+	\end{minipage}
+	
+	\vfill
+	
+	{\large 5. marec, 2020}
+	
+\end{titlepage}
+\end{document}
