@@ -1,4 +1,8 @@
 # Teorija grafov
+## Naloga
+Raziskovalna naloga je v `report/report.pdf`.
+
+## Program
 vse potrebne knjižnice so v datoteki `requirements.txt`
 
 program zaženemo z:
@@ -6,7 +10,7 @@ program zaženemo z:
 python main.py
 ```
 
-## Navodila za uporabo programa:
+### Navodila za uporabo programa:
 * Dodajanje vozlišča - TAB
 * Brisanje vozlišča - MIDDLE MOUSE
 * Dodajanje povezave - označi vozlišča z desnim klikom, nato SPACE
